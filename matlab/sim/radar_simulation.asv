@@ -4,14 +4,14 @@
 
 % Initialize radar and target parameters
 target = Target();
-target.Plat_Pos_m = 10;
-target.Plat_Vel_m_s = 20;
+target.Plat_Pos_m = 100;
+target = 0;
 
 rangeResolution = 1;
-maxRange = 100;
+maxRange = 200;
 radar = Radar();
 radar.Freq_Center_hz = 77e9;
-radar.Bandwidth_hz   = physconst('LightSpeed')/(2*rangeResolution);
+radar.Bandwidth_hz   = physconst('LightSpeed')/(rangeResolution);
 radar.Pulse_Width_s = (5.5 * 2 * maxRange) / physconst('LightSpeed');
 
 slope = radar.Bandwidth_hz / radar.Pulse_Width_s;
@@ -83,7 +83,7 @@ Mix_fft = abs(Mix_fft);
 Mix_fft = Mix_fft(1:Nr/2,:);
 
 %plotting the range
-figure (2)
+figure ('Name','Range from First FFT')
 subplot(2,1,1)
 
 % *%TODO* :
@@ -103,38 +103,5 @@ xlabel('Range (m)')
 ylabel('Amplitude')
 axis ([0 200 0 1]);
 
-%% RANGE DOPPLER RESPONSE
-% The 2D FFT implementation is already provided here. This will run a 2DFFT
-% on the mixed signal (beat signal) output and generate a range doppler
-% map.You will implement CFAR on the generated RDM
 
-
-% Range Doppler Map Generation.
-
-% The output of the 2D FFT is an image that has reponse in the range and
-% doppler FFT bins. So, it is important to convert the axis from bin sizes
-% to range and doppler based on their Max values.
-
-Mix=reshape(Mix,[Nr,Nd]);
-
-% 2D FFT using the FFT size for both dimensions.
-sig_fft2 = fft2(Mix,Nr,Nd);
-
-% Taking just one side of signal from Range dimension.
-sig_fft2 = sig_fft2(1:Nr/2,1:Nd);
-sig_fft2 = fftshift(sig_fft2);
-RDM = abs(sig_fft2);
-RDM = 10*log10(RDM) ;
-
-%use the surf function to plot the output of 2DFFT and to show axis in both
-%dimensions
-doppler_axis = linspace(-100,100,Nd);
-range_axis = linspace(-200,200,Nr/2)*((Nr/2)/400);
-figure(3)
-surf(doppler_axis,range_axis,RDM);
-title( 'RDM From 2D FFT');
-xlabel('Velocity');
-ylabel('Range');
-zlabel('Amplitude (dB)');
-colorbar;
 
