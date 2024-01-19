@@ -9,7 +9,7 @@ lightspeed = physconst('LightSpeed');
 
 target = Target();
 target.Plat_Pos_m = 10;
-target.Plat_Vel_m_s = 20;
+target.Plat_Vel_m_s = 3;
 
 radar = Radar();
 radar.Freq_Center_hz = 77e9;
@@ -17,11 +17,13 @@ radar.Bandwidth_hz   = lightspeed/(2*range_resolution);
 radar.Pulse_Width_s  = (5.5 * 2 * max_range) / lightspeed;
 radar.Lambda_m       = lightspeed/radar.Freq_Center_hz;
 
+
 % calculate other params needed for data processing
-target_doppler_freq_hz = -2*(target.Plat_Vel_m_s/radar.Lambda_m);
+target_doppler_freq_hz = (2*target.Plat_Vel_m_s)/radar.Lambda_m;
+fprintf(1,'Target Doppler Frequency \n\t%2.2f Hz\n',target_doppler_freq_hz);
 slope = radar.Bandwidth_hz / radar.Pulse_Width_s;
 
-%The number of chirps in one sequence. Its ideal to have 2^ value for the ease of running the FFT
+%The number of chirps in one sequence. Its ideal to have 2^n value for the ease of running the FFT
 %for Doppler Estimation. 
 Nd=128;                   % #of doppler cells OR #of sent periods % number of chirps
 

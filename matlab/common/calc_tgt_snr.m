@@ -1,6 +1,7 @@
 function [SNR] = calc_tgt_snr(rngEq)
 %CALC_TGT_SNR Summary of this function goes here
-%   Detailed explanation goes here
+%   Calculates the the signal to noise ration for a specific target radar
+%   cross section i.e. sigma(dbsm)
 % Pt — Peak transmit power in watts
 % Gt — Transmit antenna gain
 % Gr — Receive antenna gain. If the radar is monostatic, the transmit and receive antenna gains are identical.
