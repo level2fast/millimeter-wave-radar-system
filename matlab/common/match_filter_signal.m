@@ -4,6 +4,7 @@ function [compressed_sig_out] = match_filter_signal(signal)
 arguments
     signal.RecvSignal (:,:) {mustBeNonnegative}  = 0 
     signal.RefSignal  (:,:) {mustBeNonnegative}  = 0 
+    signal.Dim        (:,:) {mustBeNonnegative}  = 1
 end
 recv_data_size = size(signal.RecvSignal,1);
 ref_sig_len    = length(signal.RecvSignal(:));
@@ -12,7 +13,7 @@ compressed_sig_out = cross_correlation(Sig1=signal.RecvSignal, ...
                                        Sig2=signal.RefSignal, ...
                                        IdxKeep=recv_data_size, ...
                                        LenFFT=fft_len,...
-                                       Dim=1);
+                                       Dim=signal.Dim);
 % time vec for compressed signal is
 % time_vec = 0:1/Fs:T - (1/Fs)
 end
