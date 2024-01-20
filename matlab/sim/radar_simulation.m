@@ -53,7 +53,7 @@ for i=1:length(time)
     %For each time sample we need update the transmitted and
     %received signal. 
     Tx(i) = cos( 2 * pi * ( radar.Freq_Center_hz * time(i) + slope * time(i)^2 /2 ) );
-    Rx(i) = cos( 2 * pi * ( radar.Freq_Center_hz * (time(i) -time_delay(i)) + ( slope * ( time(i) - time_delay(i) )^2) / 2 ) );
+    Rx(i) = cos( 2 * pi * ( radar.Freq_Center_hz * (time(i) - time_delay(i)) + ( slope * ( time(i) - time_delay(i) )^2) / 2 ) );
     
     %Now by mixing the Transmit and Receive generate the beat signal
     %This is done by element wise matrix multiplication of Transmit and
