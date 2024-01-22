@@ -13,8 +13,8 @@ k = round(dopp_freq ./ prf_vec_hz); % k is the ambiguity index and it describes
 
 dopp_freq_ambig = dopp_freq - (k.*prf_vec_hz);
 range_rate_apparent = dopp_freq_ambig / range_rate_to_dop; % This is the doppler value of the 
-                                                          % target as it appears to the radar 
-                                                          % at each PRF
+                                                           % target as it appears to the radar 
+                                                           % at each PRF
 
 figure()
 plot(prf_vec_hz/1e3,range_rate_apparent,'o-')

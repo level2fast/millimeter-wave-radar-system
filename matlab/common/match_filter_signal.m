@@ -1,6 +1,8 @@
 function [compressed_sig_out] = match_filter_signal(signal)
 %MATCH_FILTER_SIGNAL Summary of this function goes here
-%   Detailed explanation goes here
+% NOTE:
+% time vec for compressed signal is
+% time_vec = 0:1/Fs:T - (1/Fs)
 arguments
     signal.RecvSignal (:,:) {mustBeNonnegative}  = 0 
     signal.RefSignal  (:,:) {mustBeNonnegative}  = 0 
@@ -14,7 +16,5 @@ compressed_sig_out = cross_correlation(Sig1=signal.RecvSignal, ...
                                        IdxKeep=recv_data_size, ...
                                        LenFFT=fft_len,...
                                        Dim=signal.Dim);
-% time vec for compressed signal is
-% time_vec = 0:1/Fs:T - (1/Fs)
 end
 

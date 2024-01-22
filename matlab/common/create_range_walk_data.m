@@ -46,12 +46,11 @@ freq_bins                = frac_n_samp_pulse *sample_rate_hz;
 % TODO SDD: plot slow time vs. freq bins before taylor adding range
 % walk effects to slwo time vector
 
-tgt_samp_prop_1 = 0;
-tgt_samp_prop_2 = 0;
+tgt_acc_mps_sqrd = 0;
 
-% create range slow time vector using 1st order taylor series approximation
-range_slow_time = relative_range + relative_range_rate * t_slow + ...
-                    tgt_samp_prop_1/2 * t_slow^2 + tgt_samp_prop_2 * t_slow^3;
+% create range slow time vector and apply range walk
+range_walk = doppler_range_walk(relative_range_rate, t_slow) + tgt_acc_mps_sqrd/2*t_slow^2;
+range_slow_time = relative_range + range_walk;
 
 % TODO SDD: plot slow time vs. freq bins after adding range walk effects
 % to slow time vector

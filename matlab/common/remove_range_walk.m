@@ -1,26 +1,25 @@
 function [signal] = remove_range_walk(removeRngWlk)
-%UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
+%REMOVERANGEWALK This function removes the effects of range walk from a
+% radar data cube and returns the corrected datacube.
+% 
+% NOTE:
+%   consider oversampling the pulses to mitigate signal loss for signal near
+%   nyquist. Downsampling required at the end if this step is applied
 arguments
     removeRngWlk.datacube {mustBeNonempty} = 0
     removeRngWlk.radar    {mustBeNonempty} = 0
     removeRngWlk.dopAmb   {mustBeNonempty} = 0
     removeRngWlk.dopOver  {mustBeNonempty} = 0
 end
-datacube = removeRngWlk.datacube;
-prf_hz =removeRngWlk.radar.Prf_hz;
-n_pulses = removeRngWlk.radar.N_pulses;
+datacube    = removeRngWlk.datacube;
+prf_hz      = removeRngWlk.radar.Prf_hz;
+n_pulses    = removeRngWlk.radar.N_pulses;
 dopp_amb_hz = removeRngWlk.dopAmb;
-fs_hz = removeRngWlk.radar.Fs_hz;
-fc_hz = removeRngWlk.radar.Freq_Center_hz;
+fs_hz       = removeRngWlk.radar.Fs_hz;
+fc_hz       = removeRngWlk.radar.Freq_Center_hz;
 
 % get radar datacube size
 [n_pri, n_pulses] = size(datacube);
-
-% specify oversample factor
-dopp_over = round(removeRngWlk.dopOver);
-prf_over = dopp_over *prf_hz;
-n_pulses_over = n_pulses* dopp_over;
 
 % create slow time vector
 slow_time = (0:n_pulses_over -1)/prf_over;
@@ -30,9 +29,6 @@ frac_n_samp_pulse = (0:n_pri-1)'/n_pri;
 idw = frac_n_samp_pulse >=1/2;
 frac_n_samp_pulse(idw) = frac_n_samp_pulse(idw) - 1;
 freq_bins = frac_n_samp_pulse *fs_hz;
-
-%%TODO SDD: Is this necessary?
-% oversample in slow time? data_over = interpft(datacube,n_pulses_over,2);
 
 % move to fast time freq domain
 data = fft(datacube,[],1);
@@ -60,15 +56,6 @@ ref_time_vec=0;
 dopp_correct = exp(1j*2*pi*dopp_amb_hz*prf_hz*ref_time_vec);
 
 
-
 % move data back to time domain ifft(data,[],1);
-
-
-
-
-
-
-% consider oversampling the pulses to mitigate signal loss for signal near
-% nyquist. Downsampling required at the end if this step is applied
 end
 
