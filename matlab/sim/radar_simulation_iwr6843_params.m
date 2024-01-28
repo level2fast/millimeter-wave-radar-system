@@ -1,94 +1,179 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Radar Target Generation aradar.N_pulses Detection Simulator
+% Radar Target Generation and Detection Simulator
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % Initialize radar aradar.N_pulses target parameters
-range_resolution = 1;
-max_range = 100;
-lightspeed = physconst('LightSpeed');
-
-target = Target();
-target.Plat_Pos_m = 10;
-target.Plat_Vel_m_s = 0;
+c = physconst('LightSpeed');
 
 radar = Radar();
 radar.Freq_Center_hz = 60e9;
-radar.Bandwidth_hz   = 1500e6;
-radar.Pulse_Width_s  = 50e-6;
-radar.Lambda_m       = freq2wavelen(radar.Freq_Center_hz,lightspeed); % Wavelength (m)
-radar.Prf_hz         = 10e3;
+radar.Bandwidth_hz   = 540e6;
+radar.Pulse_Width_s  = 45e-6;
+radar.Lambda_m       = freq2wavelen(radar.Freq_Center_hz,c); % Wavelength (m)
+radar.Prf_hz         = 1/radar.Pulse_Width_s;
 radar.N_pulses       = 128;
-radar.Fs_hz          = 5e6;
+radar.Fs_hz          = 11e6;
+pri                  = radar.Pulse_Width_s;
 
-% calculate aradar.N_pulses display targets absolute doppler frequency
-target_doppler_freq_hz = (2*target.Plat_Vel_m_s)/radar.Lambda_m;
-fprintf(1,'Target Doppler Frequency \n\t%2.2f Hz\n',target_doppler_freq_hz);
+% Use phased.RangEstimator object to generate RDM
 
-% calculate number of samples per pulse in order to generate
-% a waveform with the correct number of samples 
-n_samples = radar.Pulse_Width_s * radar.Fs_hz;
+% Setup scenario parameters by creating our targets
+fc = radar.Freq_Center_hz;
+Numtgts = 3;
+tgtpos = zeros(Numtgts);
+tgtpos(1,:) = [100 30 10];
+tgtvel = zeros(3,Numtgts);
+tgtvel(1,:) = [-40 10 5];
+tgtrcs = db2pow(10)*[1 1 0];
+tgtmotion = phased.Platform(tgtpos,tgtvel);
+target = phased.RadarTarget('PropagationSpeed',c,'OperatingFrequency',fc, ...
+    'MeanRCS',tgtrcs);
+radarpos = [0;0;0];
+radarvel = [0;0;0];
+radarmotion = phased.Platform(radarpos,radarvel);
 
-% generate linear chirp waveform with "n_samples" number of smaples
-tx_signal = create_lfm_pulse_samples(SweepBandwidth=1.5e6,Fs=radar.Fs_hz,NumberOfSamples=n_samples);
-%tx_signal = create_lfm_pulse_time(ChirpUpDown=1,F0=0,F1=1.5e6,Fs=radar.Fs_hz,T=radar.Pulse_Width_s);
+% create tx and rx antennas
+txantenna = phased.IsotropicAntennaElement;
+rxantenna = clone(txantenna);
 
-% calcuate the fast time frequency vector which will be used
-% for applying the range time delay
-fast_time_freq_vec = create_fast_time_freq(NumPulses=radar.N_pulses,NumSampPerPulse=n_samples,SampleRate_Hz=radar.Fs_hz);
+% Setup transmitter-end signal processing
+fs = radar.Fs_hz;
+bw = radar.Bandwidth_hz;
+prf = radar.Prf_hz;
+pulses = 1;
+duty_cycle_perc = 0.2;
+waveform = phased.LinearFMWaveform('SampleRate',fs, ...
+    'PRF',prf,'OutputFormat','Pulses','NumPulses',pulses,'SweepBandwidth',bw, ...
+    'DurationSpecification','Duty cycle','DutyCycle',duty_cycle_perc);
+sig = waveform();
+Nr = length(sig);
+bwrms = bandwidth(waveform)/sqrt(12);
+rngrms = c/bwrms;
 
-% calculate slow time vector
-slow_time_vec  = (0:radar.N_pulses-1)/radar.Prf_hz;
+% setup transmitter and radiator
+peakpower = 10;
+txgain = 36.0;
+transmitter = phased.Transmitter( ...
+    'PeakPower',peakpower, ...
+    'Gain',txgain, ...
+    'InUseOutputPort',true);
+radiator = phased.Radiator( ...
+    'Sensor',txantenna,...
+    'PropagationSpeed',c,...
+    'OperatingFrequency',fc);
 
-% calculate range time delay for simulating a targets displacement with
-% respect to the range time axis
-range_target = target.Plat_Pos_m + (slow_time_vec * target.Plat_Vel_m_s);
+% setup free space channel
+channel = phased.FreeSpace( ...
+    'SampleRate',fs, ...    
+    'PropagationSpeed',c, ...
+    'OperatingFrequency',fc, ...
+    'TwoWayPropagation',true);
 
-time_delay_vec = (2*range_target)/lightspeed;
+% setup receiver
+collector = phased.Collector( ...
+    'Sensor',rxantenna, ...
+    'PropagationSpeed',c, ...
+    'OperatingFrequency',fc);
+rxgain = 42.0;
+noisefig = 1;
+receiver = phased.ReceiverPreamp( ...
+    'SampleRate',fs, ...
+    'Gain',rxgain, ...
+    'NoiseFigure',noisefig);
 
-% calculate the phase of the transmitted signal when it is delayed
-% in time. This is done so that this phase can be combined with
-% the orignal waveform in order to simulate a target at a specific
-% range aradar.N_pulses doppler
-time_delay_phase = 2 * pi * (fast_time_freq_vec + radar.Freq_Center_hz) * time_delay_vec;
-
-mod_phase_vec = exp(-1j * time_delay_phase);
-
-shifted_signal = mod_phase_vec.*fft(tx_signal)';
-
-rx_signal = ifft(shifted_signal);
-
-
-%% RANGE MEASUREMENT
-%tx_signal = repmat(tx_signal,)
-match_filter_outptut = compress_signal(tx_signal,rx_signal,1,n_samples);
-
-%plotting the range
-%subplot(2,1,1)
-%Plot result to verify matched filter result
-%plot(abs(fftshift((match_filter_outptut(1,radar.N_pulses)))));
-imagesc(n_samples,radar.N_pulses, abs(fftshift((match_filter_outptut))));
-axis image              % adjust displayed aspect ratio
-%colormap('gray')        % adjust the contrast
-title('Range compressed image of first patch')
-xlabel('Range bin');
-ylabel('Azimuth bin');
-title('Matched Filter Output')
-
-hold off
-
-% subplot(2,1,2)
-% imagesc(real(match_filter_outptut));
-% xlabel('Range (m)')
-% ylabel('Amplitude')
-% title('Range from First FFT (Chirp #1)')
+% Loop over the pulses to create a data cube of 128 pulses. For each step 
+% of the loop, move the target and propagate the signal. Then put the received 
+% signal into the data cube. The data cube contains the received signal per 
+% pulse. Ordinarily, a data cube has three dimensions where the last dimension 
+% corresponds to antennas or beams. Because only one sensor is used, the cube 
+% has only two dimensions.
 % 
-% subplot(2,1,3)
+% The processing steps are:
 % 
-% % plot FFT output
-% plot(match_filter_outptut)
-% title('Range from First FFT (Chirp #1)')
-% xlabel('Range (m)')
-% ylabel('Amplitude')
-% axis ([0 200 0 1]);
+% Move the radar and targets.
 % 
+% Transmit a waveform.
+% 
+% Propagate the waveform signal to the target.
+% 
+% Reflect the signal from the target.
+% 
+% Propagate the waveform back to the radar. Two-way propagation enables you to combine the return propagation with the outbound propagation.
+% 
+% Receive the signal at the radar.
+% 
+% Load the signal into the data cube.
+n_samples_per_pulse = radar.Pulse_Width_s * radar.Fs_hz;
+Np = radar.N_pulses;
+dt = pri;
+cube = zeros(Nr,Np);
+for n = 1:Np
+    [sensorpos,sensorvel] = radarmotion(dt);
+    [tgtpos,tgtvel] = tgtmotion(dt);
+    [~,tgtang] = rangeangle(tgtpos,sensorpos);
+    sig = waveform();
+    [txsig,txstatus] = transmitter(sig);
+    txsig = radiator(txsig,tgtang);
+    txsig = channel(txsig,sensorpos,tgtpos,sensorvel,tgtvel);    
+    tgtsig = target(txsig);   
+    rxcol = collector(tgtsig,tgtang);
+    rxsig = receiver(rxcol);
+    cube(:,n) = rxsig;
+end
 
+% % display data cube showing signals per pulse
+% imagesc((0:(Np-1))*pri*1e6,(0:(Nr-1))/fs*1e6,abs(cube))
+% xlabel('Slow Time {\mu}s')
+% ylabel('Fast Time {\mu}s')
+% axis xy
+
+% show range doppler map
+ndop = 512;
+rangedopresp = phased.RangeDopplerResponse('SampleRate',fs, ...
+    'PropagationSpeed',c,'DopplerFFTLengthSource','Property', ...
+    'DopplerFFTLength',ndop,'DopplerOutput','Speed', ...
+    'OperatingFrequency',fc);
+matchingcoeff = getMatchedFilter(waveform);
+[rngdopresp,rnggrid,dopgrid] = rangedopresp(cube,matchingcoeff);
+imagesc(dopgrid,rnggrid,10*log10(abs(rngdopresp)))
+colorbar
+xlabel('Closing Speed (m/s)')
+ylabel('Range (m)')
+axis xy
+
+figure(2)
+surf(dopgrid,rnggrid,10*log10(abs(rngdopresp)));
+title( 'RDM From 2D FFT');
+xlabel('Velocity');
+ylabel('Range');
+zlabel('Amplitude (dB)');
+colorbar;
+
+mfgain = matchingcoeff'*matchingcoeff;
+dopgain = Np;
+noisebw = fs;
+noisepower = noisepow(noisebw,receiver.NoiseFigure,receiver.ReferenceTemperature);
+noisepowerprc = mfgain*dopgain*noisepower;
+noise = noisepowerprc*ones(size(rngdopresp));
+
+rangeestimator = phased.RangeEstimator('NumEstimatesSource','Auto', ...
+    'VarianceOutputPort',true,'NoisePowerSource','Input port', ...
+    'RMSResolution',rngrms);
+dopestimator = phased.DopplerEstimator('VarianceOutputPort',true, ...
+    'NoisePowerSource','Input port','NumPulses',Np);
+
+detidx = NaN(2,Numtgts);
+tgtrng = rangeangle(tgtpos,radarpos);
+tgtspd = radialspeed(tgtpos,tgtvel,radarpos,radarvel);
+tgtdop = 2*speed2dop(tgtspd,c/fc);
+for m = 1:numel(tgtrng)
+    [~,iMin] = min(abs(rnggrid-tgtrng(m)));
+    detidx(1,m) = iMin;
+    [~,iMin] = min(abs(dopgrid-tgtspd(m)));
+    detidx(2,m) = iMin;
+end
+
+ind = sub2ind(size(noise),detidx(1,:),detidx(2,:));
+
+[rngest,rngvar] = rangeestimator(rngdopresp,rnggrid,detidx,noise(ind));
+
+[spdest,spdvar] = dopestimator(rngdopresp,dopgrid,detidx,noise(ind));

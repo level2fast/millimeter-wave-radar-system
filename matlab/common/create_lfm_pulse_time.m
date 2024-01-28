@@ -18,27 +18,25 @@ arguments
     lfmP.F0 (1,1) {mustBeNonnegative}  = 0 
     lfmP.F1 (1,1) {mustBeNonnegative}  = 0 
     lfmP.T  (1,1) {mustBeNonnegative}  = 0 
-    lfmP.ChirpUpDown (1,1) {mustBeNonnegative}  = 0 
+    lfmP.ChirpUpDown (1,1) {mustBeText}  = "up" 
 end
-sweep_bandwidth = lfmP.Fs * lfmP.T;
-F1_hz = lfmP.F1;
+
+f1_hz = lfmP.F1;
 f0_hz = lfmP.F0;
 pulse_duration_s = lfmP.T;
 phi = 0;
-if(sweep_bandwidth/2 > lfmP.Fs)
-    disp('Warning: aliasing will be produced since BW/2 > Fs')
-end
 
-if(lfmP.ChirpUpDown==-1)
-temp = lfmP.F0;
-lfmP.F0 = lfmP.F1;
-lfmP.F1=temp;
+
+if(lfmP.ChirpUpDown== "down")
+    temp    = lfmP.F0;
+    lfmP.F0 = lfmP.F1;
+    lfmP.F1 =temp;
 end
 
 dt = 1/lfmP.Fs;
 time_vec_s = 0:dt:lfmP.T-(1/lfmP.Fs);
-k = (F1_hz - f0_hz) / pulse_duration_s;
-freqz_hz = 2 * pi * ((k/2) .* time_vec_s + f0_hz) .* time_vec_s +phi;
+k = (f1_hz - f0_hz) / pulse_duration_s;
+freqz_hz = 2 * pi * ((k/2) .* time_vec_s + f0_hz) .* time_vec_s + phi;
 theta = freqz_hz + phi;
 lfm_signal = exp(1j*theta);
 end

@@ -30,7 +30,7 @@ RestoredSignal = conj(ReferenceSignalFreqDm).*NoisySignalFreqDm;
 %Perform range IFFT
 if(peformIFFT)
     CompressedSignal = ifft(RestoredSignal);
-    CompressedSignal(:,size(LinearFMChirp,2)+1:end) = []; % throw away junk
+    CompressedSignal(:,cols+1:end) = []; % throw away junk
 else
     CompressedSignal = RestoredSignal;
 

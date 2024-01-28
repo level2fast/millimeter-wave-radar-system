@@ -1,89 +1,41 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Radar Target Generation aradar.N_pulses Detection Simulator
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+plot_results_chirp = 0;
 % Initialize radar aradar.N_pulses target parameters
 range_resolution = 1;
-max_range = 100;
-lightspeed = physconst('LightSpeed');
+max_range = 10;
+c = physconst('LightSpeed');
 
 target = Target();
-target.Plat_Pos_m = 50;
+target.Plat_Pos_m = 100;
 target.Plat_Vel_m_s = 0;
 
 radar = Radar();
 radar.Freq_Center_hz = 60e9;
-radar.Bandwidth_hz   = 1.5e9;
+radar.Bandwidth_hz   = 2e6;
 radar.Pulse_Width_s  = 50e-6;
-radar.Lambda_m       = freq2wavelen(radar.Freq_Center_hz,lightspeed); % Wavelength (m)
-radar.Prf_hz         = 10e3;
+radar.Lambda_m       = freq2wavelen(radar.Freq_Center_hz,c); % Wavelength (m)
+radar.Prf_hz         = 1/radar.Pulse_Width_s;
 radar.N_pulses       = 128;
 radar.Fs_hz          = 5e6;
 
-% calculate aradar.N_pulses display targets absolute doppler frequency
-target_doppler_freq_hz = (2*target.Plat_Vel_m_s)/radar.Lambda_m;
-fprintf(1,'Target Doppler Frequency \n\t%2.2f Hz\n',target_doppler_freq_hz);
 
-% calculate number of samples per pulse in order to generate
-% a waveform with the correct number of samples 
-n_samples = radar.Pulse_Width_s * radar.Fs_hz;
+% Use phased.RangEstimator object to generate RDM
 
-% generate linear chirp waveform with "n_samples" number of smaples
-tx_signal = create_lfm_pulse_samples(Causal=1,ChirpUpDown=1,Fs=radar.Fs_hz,NumberOfSamples=n_samples);
+% Setup scenario parameters by creating our targets
+fc = radar.Freq_Center_hz;
+Numtgts = 3;
+tgtpos = zeros(Numtgts);
+tgtpos(1,:) = [10 20 30];
+tgtvel = zeros(3,Numtgts);
+tgtvel(1,:) = [-60 20 40];
+tgtrcs = db2pow(10)*[1 1 1];
+tgtmotion = phased.Platform(tgtpos,tgtvel);
+target = phased.RadarTarget('PropagationSpeed',c,'OperatingFrequency',fc, ...
+    'MeanRCS',tgtrcs);
+radarpos = [0;0;0];
+radarvel = [0;0;0];
+radarmotion = phased.Platform(radarpos,radarvel);
 
-% calcuate the fast time frequency vector which will be used
-% for applying the range time delay
-fast_time_freq_vec = create_fast_time_freq(NumPulses=radar.N_pulses,NumSampPerPulse=n_samples,SampleRate_Hz=radar.Fs_hz);
-
-% calculate slow time vector
-slow_time_vec  = (0:radar.N_pulses-1)/radar.Prf_hz;
-
-% calculate range time delay for simulating a targets displacement with
-% respect to the range time axis
-range_target = target.Plat_Pos_m + (slow_time_vec * target.Plat_Vel_m_s);
-
-time_delay_vec = (2*range_target)/lightspeed;
-
-% calculate the phase of the transmitted signal when it is delayed
-% in time. This is done so that this phase can be combined with
-% the orignal waveform in order to simulate a target at a specific
-% range aradar.N_pulses doppler
-time_delay_phase = 2 * pi * (fast_time_freq_vec + radar.Freq_Center_hz) * time_delay_vec;
-
-mod_phase_vec = exp(-1j * time_delay_phase);
-
-shifted_signal = mod_phase_vec.*fft(tx_signal)';
-
-rx_signal = ifft(shifted_signal);
-
-
-%% RANGE MEASUREMENT
-match_filter_outptut = compress_signal(tx_signal,rx_signal,true,n_samples);
-
-%plotting the range
-figure (2)
-subplot(2,1,1)
-%Plot result to verify matched filter result
-plot(abs(fftshift((match_filter_outptut))));
-%axis([0 n_samples 0 80e3])
-
-xlabel('Range (m)')
-ylabel('Amplitude')
-title('Matched Filter Output')
-
-% subplot(2,1,2)
-% imagesc(real(match_filter_outptut));
-% xlabel('Range (m)')
-% ylabel('Amplitude')
-% title('Range from First FFT (Chirp #1)')
-% 
-% subplot(2,1,3)
-% 
-% % plot FFT output
-% plot(match_filter_outptut)
-% title('Range from First FFT (Chirp #1)')
-% xlabel('Range (m)')
-% ylabel('Amplitude')
-% axis ([0 200 0 1]);
-% 
-
+% create tx and rx ante
