@@ -8,7 +8,7 @@ function [lfm_signal] = create_lfm_pulse_time(lfmP)
 %       where
 %           s(t) = 2*pi*alpha*t^2 + 2*pi*fc*t+phi
 %       and
-%       fs = signal sample rate. Specified as a positive scalar (Hz)
+%       Fs = signal sample rate. Specified as a positive scalar (Hz)
 %       F0 = Start frequency (Hz)
 %       F0 = End frequency (Hz)
 %       T = Total duration of pulse
@@ -21,23 +21,23 @@ arguments
     lfmP.ChirpUpDown (1,1) {mustBeNonnegative}  = 0 
 end
 sweep_bandwidth = lfmP.Fs * lfmP.T;
-f1_hz = lfmP.F1;
+F1_hz = lfmP.F1;
 f0_hz = lfmP.F0;
 pulse_duration_s = lfmP.T;
 phi = 0;
 if(sweep_bandwidth/2 > lfmP.Fs)
-    disp('Warning: aliasing will be produced since BW/2 > fs')
+    disp('Warning: aliasing will be produced since BW/2 > Fs')
 end
 
 if(lfmP.ChirpUpDown==-1)
 temp = lfmP.F0;
 lfmP.F0 = lfmP.F1;
-lfmP.f1=temp;
+lfmP.F1=temp;
 end
 
-dt = 1/lfmP.fs;
+dt = 1/lfmP.Fs;
 time_vec_s = 0:dt:lfmP.T-(1/lfmP.Fs);
-k = (f1_hz - f0_hz) / pulse_duration_s;
+k = (F1_hz - f0_hz) / pulse_duration_s;
 freqz_hz = 2 * pi * ((k/2) .* time_vec_s + f0_hz) .* time_vec_s +phi;
 theta = freqz_hz + phi;
 lfm_signal = exp(1j*theta);

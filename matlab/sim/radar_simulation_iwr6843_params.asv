@@ -8,12 +8,12 @@ max_range = 100;
 lightspeed = physconst('LightSpeed');
 
 target = Target();
-target.Plat_Pos_m = 10;
+target.Plat_Pos_m = 50;
 target.Plat_Vel_m_s = 0;
 
 radar = Radar();
 radar.Freq_Center_hz = 60e9;
-radar.Bandwidth_hz   = 1500e6;
+radar.Bandwidth_hz   = 1.5e9;
 radar.Pulse_Width_s  = 50e-6;
 radar.Lambda_m       = freq2wavelen(radar.Freq_Center_hz,lightspeed); % Wavelength (m)
 radar.Prf_hz         = 10e3;
@@ -29,8 +29,7 @@ fprintf(1,'Target Doppler Frequency \n\t%2.2f Hz\n',target_doppler_freq_hz);
 n_samples = radar.Pulse_Width_s * radar.Fs_hz;
 
 % generate linear chirp waveform with "n_samples" number of smaples
-tx_signal = create_lfm_pulse_samples(SweepBandwidth=1.5e6,Fs=radar.Fs_hz,NumberOfSamples=n_samples);
-%tx_signal = create_lfm_pulse_time(ChirpUpDown=1,F0=0,F1=1.5e6,Fs=radar.Fs_hz,T=radar.Pulse_Width_s);
+tx_signal = create_lfm_pulse_samples(Causal=1,ChirpUpDown=1,Fs=radar.Fs_hz,NumberOfSamples=n_samples);
 
 % calcuate the fast time frequency vector which will be used
 % for applying the range time delay
@@ -59,22 +58,18 @@ rx_signal = ifft(shifted_signal);
 
 
 %% RANGE MEASUREMENT
-%tx_signal = repmat(tx_signal,)
-match_filter_outptut = compress_signal(tx_signal,rx_signal,1,n_samples);
+match_filter_outptut = compress_signal(tx_signal,rx_signal,true,n_samples);
 
 %plotting the range
-%subplot(2,1,1)
+figure (2)
+subplot(2,1,1)
 %Plot result to verify matched filter result
-%plot(abs(fftshift((match_filter_outptut(1,radar.N_pulses)))));
-imagesc(n_samples,radar.N_pulses, abs(fftshift((match_filter_outptut))));
-axis image              % adjust displayed aspect ratio
-%colormap('gray')        % adjust the contrast
-title('Range compressed image of first patch')
-xlabel('Range bin');
-ylabel('Azimuth bin');
-title('Matched Filter Output')
+plot(abs(fftshift((match_filter_outptut))));
+%axis([0 n_samples 0 80e3])
 
-hold off
+xlabel('Range (m)')
+ylabel('Amplitude')
+title('Matched Filter Output')
 
 % subplot(2,1,2)
 % imagesc(real(match_filter_outptut));

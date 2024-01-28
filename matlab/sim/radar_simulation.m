@@ -1,10 +1,12 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Radar Target Generation and Detection project
+% Millimeter Wave Radar Target Generation and Detection
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear all
 clc;
 
+%% Step 1: Generate and detect  range and velocity of a target with a 
+% high rcs, something equivalent to the rcs of a car or bus 
 %% Radar Specifications 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Frequency of operation = 77GHz
@@ -46,7 +48,9 @@ Nr=1024;                  %for length of time OR # of range cells
 
 % Timestamp for running the displacement scenario for every sample on each
 % chirp
-t=linspace(0,Nd*Tchirp,Nr*Nd); %total time for samples
+total_samples_cpi = Nr*Nd;
+total_time_all_pris = Nd*Tchirp;
+t=linspace(0,total_time_all_pris,total_samples_cpi); %total time for samples
 
 
 %Creating the vectors for Tx, Rx and Mix based on the total samples input.

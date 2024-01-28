@@ -13,11 +13,11 @@ if(crossCorr.IdxKeep > size(crossCorr.Sig1,1))
 end
 
 if(crossCorr.Dim > 0 )
-    sig1_freq = fft(crossCorr.sig1, crossCorr.LenFFT,crossCorr.Dim);
-    sig2_freq = fft(crossCorr.sig2(:), crossCorr.LenFFT,crossCorr.Dim);
+    sig1_freq = fft(crossCorr.Sig1, crossCorr.LenFFT,crossCorr.Dim);
+    sig2_freq = fft(crossCorr.Sig2(:), crossCorr.LenFFT,crossCorr.Dim);
 else
-    sig1_freq = fft(crossCorr.sig1, crossCorr.LenFFT);
-    sig2_freq = fft(crossCorr.sig2(:), crossCorr.LenFFT);    
+    sig1_freq = fft(crossCorr.Sig1, crossCorr.LenFFT);
+    sig2_freq = fft(crossCorr.Sig2(:), crossCorr.LenFFT);    
 end
 
 sig_out_freq = bsxfun(@times, sig1_freq,conj(sig2_freq));

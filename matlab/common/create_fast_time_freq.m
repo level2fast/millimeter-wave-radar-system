@@ -14,7 +14,7 @@ fs_hz = fastTime.SampleRate_Hz;
 % vector into a vector representing the spacing in the frequency domain.
 frac_n_samp_pulse      = (0:n_samp_per_pulse-1)' / n_samp_per_pulse; 
 idx                    = frac_n_samp_pulse >= 1/2;
-frac_n_samp_pulse(idw) = frac_n_samp_pulse(idx) - 1;
+frac_n_samp_pulse(idx) = frac_n_samp_pulse(idx) - 1;
 freq_bins              = frac_n_samp_pulse * fs_hz;
 end
 
