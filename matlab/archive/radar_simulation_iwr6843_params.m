@@ -12,6 +12,7 @@ radar.Lambda_m       = freq2wavelen(radar.Freq_Center_hz,c); % Wavelength (m)
 radar.Prf_hz         = 1/radar.Pulse_Width_s;
 radar.N_pulses       = 128;
 radar.Fs_hz          = 11e6;
+radar.Duty_Factor    = 0.02;
 pri                  = radar.Pulse_Width_s;
 
 % Use phased.RangEstimator object to generate RDM
@@ -40,7 +41,7 @@ fs = radar.Fs_hz;
 bw = radar.Bandwidth_hz;
 prf = radar.Prf_hz;
 pulses = 1;
-duty_cycle_perc = 0.2;
+duty_cycle_perc = radar.Duty_Factor;
 waveform = phased.LinearFMWaveform('SampleRate',fs, ...
     'PRF',prf,'OutputFormat','Pulses','NumPulses',pulses,'SweepBandwidth',bw, ...
     'DurationSpecification','Duty cycle','DutyCycle',duty_cycle_perc);

@@ -8,17 +8,17 @@ max_range = 10;
 lightspeed = physconst('LightSpeed');
 
 target = Target();
-target.Plat_Pos_m = 100;
+target.Plat_Pos_m = 50;
 target.Plat_Vel_m_s = 0;
 
 radar = Radar();
 radar.Freq_Center_hz = 60e9;
-radar.Bandwidth_hz   = 2e6;
+radar.Bandwidth_hz   = 540e6;
 radar.Pulse_Width_s  = 50e-6;
 radar.Lambda_m       = freq2wavelen(radar.Freq_Center_hz,lightspeed); % Wavelength (m)
-radar.Prf_hz         = 10e3;
+radar.Prf_hz         = 1/radar.Pulse_Width_s;
 radar.N_pulses       = 128;
-radar.Fs_hz          = 5e6;
+radar.Fs_hz          = 11e6;
 
 % calculate aradar.N_pulses display targets absolute doppler frequency
 target_doppler_freq_hz = (2*target.Plat_Vel_m_s)/radar.Lambda_m;
@@ -99,7 +99,7 @@ time_delay_phase = 2 * pi * (fast_time_freq_vec + radar.Freq_Center_hz) * time_d
 phase_shift_vec = exp(-1j * time_delay_phase);
 
 % apply frequency domain phase shift
-shifted_signal = phase_shift_vec .* tx_signal_freq;
+shifted_signal = fft(phase_shift_vec) .* tx_signal_freq;
 shifted_signal_time = ifft(shifted_signal);
 
 % create time domain received signal which is needed for match filtering
@@ -108,7 +108,7 @@ rx_signal = signal_data_mat + shifted_signal_time;
 
 figure(2)
 subplot(2,1,1)
-imagesc(20*log10(abs((rx_signal))))
+imagesc(20*log10(abs((fftshift(rx_signal)))))
 colorbar
 title('Fast time vs. Slow time')
 xlabel('Pulse');

@@ -169,3 +169,93 @@ xlabel('Velocity');
 ylabel('Range');
 zlabel('Amplitude (dB)');
 colorbar;
+
+% %% CFAR implementation
+% 
+% %Slide Window through the complete Range Doppler Map
+% 
+% % *%TODO* :
+% %Select the number of Training Cells in both the dimensions.
+% rangeTrainingCells = 10;
+% dopplerTrainingCells = 8;
+% 
+% % *%TODO* :
+% %Select the number of Guard Cells in both dimensions around the Cell under 
+% %test (CUT) for accurate estimation
+% rangeGuardCells = 2;
+% dopplerGuardCells = 4;
+% 
+% guardAndCUT_Cells = (2*rangeGuardCells+1)*(2*dopplerGuardCells+1);
+% trainingCells = (2*rangeTrainingCells+2*rangeGuardCells+1)*(2*dopplerTrainingCells+2*dopplerGuardCells+1) - guardAndCUT_Cells;
+% 
+% % *%TODO* :
+% % offset the threshold by SNR value in dB
+% offset = 10;
+% 
+% % *%TODO* :
+% %Create a vector to store noise_level for each iteration on training cells
+% noise_level = zeros(Nr/2,Nd);
+% 
+% %A vector to store signal after applying CA_CFAR
+% signal_cfar = zeros(Nr/2,Nd);
+% 
+% % *%TODO* :
+% %design a loop such that it slides the CUT across range doppler map by
+% %giving margins at the edges for Training and Guard Cells.
+% %For every iteration sum the signal level within all the training
+% %cells. To sum convert the value from logarithmic to linear using db2pow
+% %function. Average the summed values for all of the training
+% %cells used. After averaging convert it back to logarithimic using pow2db.
+% %Further add the offset to it to determine the threshold. Next, compare the
+% %signal under CUT with this threshold. If the CUT level > threshold assign
+% %it a value of 1, else equate it to 0.
+% for r = 1:(Nr/2-(2*rangeGuardCells+2*rangeTrainingCells))
+%    for d = 1:(Nd-(2*dopplerGuardCells+2*dopplerTrainingCells))
+%    % Use RDM[x,y] as the matrix from the output of 2D FFT for implementing
+%    % CFAR
+% 
+%    % CUT index
+%    CUT_r = r+rangeGuardCells+rangeTrainingCells+1;
+%    CUT_d = d+dopplerGuardCells+dopplerTrainingCells+1;
+% 
+%    noise = sum(sum(db2pow(RDM(r:r+2*rangeGuardCells+2*rangeTrainingCells,d:d+2*dopplerGuardCells+2*dopplerTrainingCells))));
+%    noise = noise - sum(sum(db2pow(RDM(r+rangeTrainingCells:r+rangeTrainingCells+2*rangeGuardCells,d+dopplerTrainingCells:d+dopplerTrainingCells+2*dopplerGuardCells))));
+%    noise_level(CUT_r, CUT_d) = pow2db(noise/trainingCells) + offset;
+% 
+%    %Compare the original signal with the noise threshold
+%    if RDM(CUT_r, CUT_d) > noise_level(CUT_r, CUT_d)
+%        signal_cfar(CUT_r, CUT_d) = 1;
+%    end
+%    end
+% end
+% 
+% % *%TODO* :
+% % The process above will generate a thresholded block, which is smaller 
+% %than the Range Doppler Map as the CUT cannot be located at the edges of
+% %matrix. Hence,few cells will not be thresholded. To keep the map size same
+% % set those values to 0. 
+% 
+% % Already accounted for this error in my algorithm above!
+% 
+% 
+% % *%TODO* :
+% %display the CFAR output using the Surf function like we did for Range
+% %Doppler Response output.
+% figure('Name', 'CA-CFAR Filtered RDM')
+% surf(doppler_axis,range_axis,signal_cfar);
+% % surf(doppler_axis,range_axis,noise_level);
+% title( 'CA-CFAR Filtered RDM');
+% xlabel('Velocity');
+% ylabel('Range');
+% zlabel('Normalized Amplitude');
+% colorbar;
+% 
+% %display the noise threshold using CA-CFAR for for Range
+% %Doppler Response output.
+% figure('Name', 'Noise threshold using CA-CFAR for RDM')
+% surf(doppler_axis,range_axis,noise_level);
+% title( 'Noise threshold');
+% xlabel('Velocity');
+% ylabel('Range');
+% zlabel('Normalized Amplitude');
+% colorbar;
