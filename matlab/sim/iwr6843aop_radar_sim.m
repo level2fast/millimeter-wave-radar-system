@@ -7,9 +7,9 @@ clc;
 %% IWR68843AOP Medium Range Radar(MRR) Specifications 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Frequency of operation = 60GHz
-% Max Range = 125m
+% Max Range = 20m
 % Range Resolution = 0.1 m
-% Max Velocity = 62 m/s
+% Max Velocity = 10 m/s
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Define simulation constants
@@ -19,8 +19,13 @@ lightspeed = physconst('LightSpeed');
 % Define the target's initial position and velocity. Note : Velocity
 % remains contant in this sim
 target = Target();
-target.Plat_Pos_m   = 20;
-target.Plat_Vel_m_s = 10;
+target.Plat_Pos_m   = 10;
+target.Plat_Vel_m_s = 9.58; % Usain Bolts World record in Velocity falls within the range of our radar
+target_doppler_freq_hz = (2*target.Plat_Vel_m_s)/radar.Lambda_m;
+fprintf(1,'Target Name \n\tUsain Bolt \n');
+fprintf(1,'Target Range  \n\t%2.2f m \n',target.Plat_Pos_m);
+fprintf(1,'Target Velocity  \n\t%2.2f m\n',target.Plat_Vel_m_s);
+fprintf(1,'Target Doppler Frequency \n\t%2.2f Hz\n',target_doppler_freq_hz);
 
 %% Define Radar parameters
 radar = Radar();
@@ -30,7 +35,7 @@ radar.Pulse_Width_s  = 7e-6;
 radar.Lambda_m       = freq2wavelen(radar.Freq_Center_hz,lightspeed); % Wavelength (m)
 radar.Prf_hz         = 1/radar.Pulse_Width_s;
 radar.N_pulses       = 128;
-radar.Fs_hz          = 16e6;
+radar.Fs_hz          = 17e6;
 
 %% FMCW Waveform Generation
 
@@ -42,9 +47,16 @@ radar.Fs_hz          = 16e6;
 fc              = radar.Freq_Center_hz;
 maxRange        = 125;
 
+fprintf(1,'Radar Center Frequency  \n\t%2.2f GHz \n',radar.Freq_Center_hz/1e9);
+fprintf(1,'Radar Sampling Rate  \n\t%2.2f MHz \n',radar.Fs_hz/1e6);
+fprintf(1,'Radar Chirp Duration \n\t%2.1f us \n',radar.Pulse_Width_s*1e6);
+fprintf(1,'Radar Bandwidth      \n\t%2.2f MHz\n',radar.Bandwidth_hz/1e6);
+fprintf(1,'Radar Pulse Repitition frequency \n\t%2.2f KHz \n',radar.Prf_hz/1e3);
+fprintf(1,'Radar Pulses \n\t%2.2f  \n',radar.N_pulses);
+
 % Calculate range resolution
 range_resolution = bw2rangeres(radar.Bandwidth_hz);
-fprintf(1,'Range Resolution \n\t%2.2f m\n',range_resolution);
+fprintf(1,'Radar Range Resolution \n\t%2.2f m\n',range_resolution);
 
 % Get operational parameters from radar to use in tx and rx processing
 Bandwidth = radar.Bandwidth_hz;
@@ -102,6 +114,10 @@ for i=1:length(time)
     Mix(i) = Tx(i) * Rx(i);
 end
 
+%% Apply a window to the time domain signal to reduce spectral leakage
+win = chebwin(length(Mix));
+Mix = win'.* Mix;
+
 %% RANGE MEASUREMENT
 % Reshape the vector into Nr*Nd array. Nr and Nd here would also define the size of
 % Range and Doppler FFT sizes respectively.
@@ -115,7 +131,7 @@ Mix_fft = (Mix_fft - min(Mix_fft, [], 1)) ./ (max(Mix_fft, [], 1) - min(Mix_fft,
 % Take the absolute value of FFT output to get the magnitude of the signal
 Mix_fft = abs(Mix_fft);
 
-% Putput of FFT is double sided signal, but we are interested in only one side of the spectrum.
+% Output of FFT is double sided signal, but we are interested in only one side of the spectrum.
 % Thereforee we throw out half of the samples.
 Mix_fft = Mix_fft(1:Nr/2,:);
 
@@ -147,7 +163,6 @@ axis ([0 (maxRange + 20) 0 1]);
 % The output of the 2D FFT is an image that has reponse in the range and
 % doppler FFT bins. So, it is important to convert the axis from bin sizes
 % to range and doppler based on their Max values.
-Mix = reshape(Mix,[Nr,Nd]);
 
 % 2D FFT using the FFT size for both dimensions.
 sig_rng_dopp_freq = fft2(Mix,Nr,Nd);

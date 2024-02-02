@@ -14,14 +14,6 @@ clc;
 
 % Define simulation constants
 lightspeed = physconst('LightSpeed');
-
-%% Define Range and Velocity of target
-% Define the target's initial position and velocity. Note : Velocity
-% remains contant in this sim
-target = Target();
-target.Plat_Pos_m   = 20;
-target.Plat_Vel_m_s = 5;
-
 %% Define Radar parameters
 radar = Radar();
 radar.Freq_Center_hz = 60e9;
@@ -31,6 +23,30 @@ radar.Lambda_m       = freq2wavelen(radar.Freq_Center_hz,lightspeed); % Waveleng
 radar.Prf_hz         = 1/radar.Pulse_Width_s;
 radar.N_pulses       = 128;
 radar.Fs_hz          = 16e6;
+
+fprintf(1,'Radar Center Frequency  \n\t%2.2f GHz \n',radar.Freq_Center_hz/1e9);
+fprintf(1,'Radar Sampling Rate  \n\t%2.2f MHz \n',radar.Fs_hz/1e6);
+fprintf(1,'Radar Chirp Duration \n\t%2.1f us \n',radar.Pulse_Width_s*1e6);
+fprintf(1,'Radar Bandwidth      \n\t%2.2f MHz\n',radar.Bandwidth_hz/1e6);
+fprintf(1,'Radar Pulse Repitition frequency \n\t%2.2f KHz \n',radar.Prf_hz/1e3);
+fprintf(1,'Radar Pulses \n\t%2.2f  \n',radar.N_pulses);
+
+% Calculate range resolution
+range_resolution = bw2rangeres(radar.Bandwidth_hz);
+fprintf(1,'Radar Range Resolution \n\t%2.2f m\n',range_resolution);
+
+%% Define Range and Velocity of target
+% Define the target's initial position and velocity. Note : Velocity
+% remains contant in this sim
+target = Target();
+target.Plat_Pos_m   = 10;
+target.Plat_Vel_m_s = 9.58;
+target_doppler_freq_hz = (2*target.Plat_Vel_m_s)/radar.Lambda_m;
+fprintf(1,'Target Name \n\tUsain Bolt \n');
+fprintf(1,'Target Range  \n\t%2.2f m \n',target.Plat_Pos_m);
+fprintf(1,'Target Velocity  \n\t%2.2f m\n',target.Plat_Vel_m_s);
+fprintf(1,'Target Doppler Frequency \n\t%2.2f Hz\n',target_doppler_freq_hz);
+
 
 %% FMCW Waveform Generation
 % define waveform properties
@@ -88,11 +104,6 @@ xlabel('Time (s)'); ylabel('Amplitude (v)');
 title('FMCW signal'); axis tight;
 subplot(212); spectrogram(sig,32,16,32,fs,'yaxis');
 title('FMCW signal spectrogram');
-
-% The target of an ACC radar is usually a car in front of it. This example 
-% assumes the target car is moving 43 m ahead of the car with the radar, at
-% a speed of 96 km/h along the x-axis. Compute the radar cross section of a
-% car.
 
 person_dist    = target.Plat_Pos_m;
 person_speed   = target.Plat_Vel_m_s;
@@ -202,7 +213,7 @@ rngdopresp = phased.RangeDopplerResponse('PropagationSpeed',c,...
     'DopplerOutput','Speed','OperatingFrequency',fc,'SampleRate',fs,...
     'RangeMethod','FFT','SweepSlope',sweep_slope,...
     'RangeFFTLengthSource','Property','RangeFFTLength',2048,...
-    'DopplerFFTLengthSource','Property','DopplerFFTLength',256);
+    'DopplerFFTLengthSource','Property','DopplerFFTLength',256,RangeWindow='Chebyshev',DopplerWindow='Chebyshev');
 
 clf;
 plotResponse(rngdopresp,xr);
