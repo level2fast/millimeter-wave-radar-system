@@ -14,6 +14,15 @@ clc;
 
 % Define simulation constants
 lightspeed = physconst('LightSpeed');
+%% Define Radar parameters
+radar = Radar();
+radar.Freq_Center_hz = 60e9;
+radar.Bandwidth_hz   = 135e6;
+radar.Pulse_Width_s  = 7e-6;
+radar.Lambda_m       = freq2wavelen(radar.Freq_Center_hz,lightspeed); % Wavelength (m)
+radar.Prf_hz         = 1/radar.Pulse_Width_s;
+radar.N_pulses       = 128;
+radar.Fs_hz          = 17e6;
 
 %% Define Range and Velocity of target
 % Define the target's initial position and velocity. Note : Velocity
@@ -27,15 +36,6 @@ fprintf(1,'Target Range  \n\t%2.2f m \n',target.Plat_Pos_m);
 fprintf(1,'Target Velocity  \n\t%2.2f m\n',target.Plat_Vel_m_s);
 fprintf(1,'Target Doppler Frequency \n\t%2.2f Hz\n',target_doppler_freq_hz);
 
-%% Define Radar parameters
-radar = Radar();
-radar.Freq_Center_hz = 60e9;
-radar.Bandwidth_hz   = 135e6;
-radar.Pulse_Width_s  = 7e-6;
-radar.Lambda_m       = freq2wavelen(radar.Freq_Center_hz,lightspeed); % Wavelength (m)
-radar.Prf_hz         = 1/radar.Pulse_Width_s;
-radar.N_pulses       = 128;
-radar.Fs_hz          = 17e6;
 
 %% FMCW Waveform Generation
 
@@ -114,9 +114,6 @@ for i=1:length(time)
     Mix(i) = Tx(i) * Rx(i);
 end
 
-%% Apply a window to the time domain signal to reduce spectral leakage
-win = chebwin(length(Mix));
-Mix = win'.* Mix;
 
 %% RANGE MEASUREMENT
 % Reshape the vector into Nr*Nd array. Nr and Nd here would also define the size of
@@ -154,6 +151,10 @@ title('Range from Last FFT (Chirp #128)')
 xlabel('Range (m)')
 ylabel('Amplitude')
 axis ([0 (maxRange + 20) 0 1]);
+
+%% Apply a window to the time domain signal to reduce spectral leakage
+win = chebwin(length(Mix));
+Mix = win'.* Mix;
 
 %% RANGE DOPPLER RESPONSE
 % A 2DFFT will be run on the mixed signal (beat signal) output to generate

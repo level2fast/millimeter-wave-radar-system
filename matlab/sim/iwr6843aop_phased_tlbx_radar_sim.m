@@ -109,10 +109,19 @@ person_dist    = target.Plat_Pos_m;
 person_speed   = target.Plat_Vel_m_s;
 person_avg_rcs = min(10*log10(person_dist),0.1);
 person_rcs     = db2pow(person_avg_rcs);
-person_target  = phased.RadarTarget('MeanRCS',person_rcs,'PropagationSpeed',c,...
+% person_target  = phased.RadarTarget('MeanRCS',person_rcs,'PropagationSpeed',c,...
+%     'OperatingFrequency',fc);
+% person_motion = phased.Platform('InitialPosition',[person_dist;0;0.5],...
+%     'Velocity',[person_speed;0;0]);
+Numtgts = 2;
+tgtpos = zeros(3,Numtgts);
+tgtvel = zeros(3,Numtgts);
+tgtpos(1,:) = [30 10];
+tgtvel(1,:) = [9 5];
+tgtrcs = db2pow(10)*[1 1];
+person_motion = phased.Platform(tgtpos,tgtvel);
+person_target  = phased.RadarTarget('MeanRCS',tgtrcs,'PropagationSpeed',c,...
     'OperatingFrequency',fc);
-person_motion = phased.Platform('InitialPosition',[person_dist;0;0.5],...
-    'Velocity',[person_speed;0;0]);
 
 % Assume the propagation model to be free space.
 channel = phased.FreeSpace('PropagationSpeed',c,...
@@ -123,7 +132,7 @@ channel = phased.FreeSpace('PropagationSpeed',c,...
 % from other components, such as coupler and mixer. In addition, for the 
 % sake of simplicity, the antenna is assumed to be isotropic and the gain 
 % of the antenna is included in the transmitter and the receiver.
-ant_aperture = (.0045)^2;                      % Antenna aperture (m^2)
+ant_aperture = (.0045)^2;                       % Antenna aperture (m^2)
 ant_gain = aperture2gain(ant_aperture,lambda);  % Antenna gain (dB)
 
 tx_ppower = db2pow(10);                     % in watts
@@ -189,18 +198,23 @@ xr = complex(zeros(waveform.SampleRate*waveform.SweepTime,Nsweep));
 for n = 1:Nsweep
     % Update radar and target positions
     [radar_pos,radar_vel] = radarmotion(waveform.SweepTime);
-    [tgt_pos,tgt_vel] = person_motion(waveform.SweepTime);
+    [tgt_pos,tgt_vel] = person_motion(1/radar.Prf_hz);
+    [tgtrng,tgtang] = rangeangle(tgtpos);
 
     % Transmit FMCW waveform
     sig = waveform();
     txsig = transmitter(sig);
 
+    % Add a radiate to capture all targets for this signal
+    txsig = radiator(txsig,tgtang); 
+
     % Propagate the signal and reflect off the target
     txsig = channel(txsig,radar_pos,tgt_pos,radar_vel,tgt_vel);
     txsig = person_target(txsig);
-
+ 
     % Dechirp the received radar return
-    rxsig = receiver(txsig);
+    rxcol = collector(txsig,tgtang);
+    rxsig = receiver(rxcol);
     dechirpsig = dechirp(rxsig,sig);
 
     % Visualize the spectrum
