@@ -1,0 +1,1 @@
+rxd_data = read_dca_1000(file_name="adc_data.bin");
