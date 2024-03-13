@@ -1,6 +1,20 @@
 function [retVal] = read_dca_1000(dca1000)
 %READDCA100 Summary of this function goes here
-%   Detailed explanation goes here
+% Row 1 contains all of the data from the first receiver, row 2 from the 
+% second receiver, row 3 from the third receiver, and row 4 from the fourth
+% receiver.
+% 
+% In cases where certain receivers are disabled, the corresponding
+% rows will be removed. 
+% 
+% Each row will contain a number of columns equal to the number of ADC 
+% samples per chirp multiplied by the total number of chirps. The columns 
+% are organized by chirps. For example, if there are 256 ADC samples and a 
+% total of 16 chirps (8 chirps/frame x 2 frames), each row will contain 
+% 4096 columns. The first 256 columns correspond to the first chirp, the 
+% next 256 columns to the second chirp, and so on. The first 2048 columns 
+% correspond to the chirps of the first frame, and so on.
+% The data can then be processed as the user desires.
 arguments
     dca1000.file_name       (1,1) {mustBeText}  = "adc_data.bin" 
     dca1000.num_adc_samples (1,1) {mustBeNonnegative}  = 256
