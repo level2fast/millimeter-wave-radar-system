@@ -1,11 +1,9 @@
 classdef FmcwRadar < Radar
     %FMCWRADAR Summary of this class goes here
     %   Detailed explanation goes here
-    
     properties
-        Property1
-        Chirp_Duration_secs  (1,1) {mustBeNumeric} = 0 % transmitted pulse width/duration
-        Frame_Time_secs      (1,1) {mustBeNumeric} = 0 % transmitted pulse width/duration
+        chirp_dur_secs  (1,1) {mustBeNumeric} = 0 % duration of a single chirp
+        frame_time_secs (1,1) {mustBeNumeric} = 0 % total frame time
     end
 end
 

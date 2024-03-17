@@ -1,4 +1,4 @@
-function [dopp_correct] = remove_range_migration(removeRngWlk)
+function [dopp_correct] = remove_range_migration(removeRngMigration)
 %REMOVERANGEWALK This function removes the effects of range walk from a
 % radar data cube and returns the corrected datacube.
 % 
@@ -6,17 +6,17 @@ function [dopp_correct] = remove_range_migration(removeRngWlk)
 %   consider oversampling the pulses to mitigate signal loss for signal near
 %   nyquist. Downsampling required at the end if this step is applied
 arguments
-    removeRngWlk.datacube {mustBeNonempty} = 0
-    removeRngWlk.radar    {mustBeNonempty} = 0
-    removeRngWlk.dopAmb   {mustBeNonempty} = 0
-    removeRngWlk.dopOver  {mustBeNonempty} = 0
+    removeRngMigration.datacube {mustBeNonempty} = 0
+    removeRngMigration.radar    {mustBeNonempty} = 0
+    removeRngMigration.dopAmb   {mustBeNonempty} = 0
+    removeRngMigration.dopOver  {mustBeNonempty} = 0
 end
-datacube    = removeRngWlk.datacube;
-prf_hz      = removeRngWlk.radar.Prf_hz;
-n_pulses    = removeRngWlk.radar.N_pulses;
-dopp_amb_hz = removeRngWlk.dopAmb;
-fs_hz       = removeRngWlk.radar.Fs_hz;
-fc_hz       = removeRngWlk.radar.Freq_Center_hz;
+datacube    = removeRngMigration.datacube;
+prf_hz      = removeRngMigration.radar.Prf_hz;
+n_pulses    = removeRngMigration.radar.N_pulses;
+dopp_amb_hz = removeRngMigration.dopAmb;
+fs_hz       = removeRngMigration.radar.Fs_hz;
+fc_hz       = removeRngMigration.radar.Freq_Center_hz;
 
 % get radar datacube size
 [n_pri, n_pulses] = size(datacube);

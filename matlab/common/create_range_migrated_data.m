@@ -1,4 +1,4 @@
-function [rng_walk_sig] = create_range_migrated_data(rangeWalk)
+function [rng_walk_sig] = create_range_migrated_data(rangeMigration)
 %CREATE_RANGE_WALK_DATA Creates a radar signal that contains range walk. 
 % 
 %   Range walk is observed when there is coupling betwen the fast time
@@ -6,32 +6,32 @@ function [rng_walk_sig] = create_range_migrated_data(rangeWalk)
 %   ways. One of which is using a 1st order taylor series. 
 
 arguments
-    rangeWalk.radar      {mustBeNonempty} = 0
-    rangeWalk.target     {mustBeNonempty} = 0
-    rangeWalk.waveform   {mustBeNonempty} = 0
-    rangeWalk.range_rate {mustBeNonempty} = 0
-    rangeWalk.range      {mustBeNonempty} = 0
+    rangeMigration.radar      {mustBeNonempty} = 0
+    rangeMigration.target     {mustBeNonempty} = 0
+    rangeMigration.waveform   {mustBeNonempty} = 0
+    rangeMigration.range_rate {mustBeNonempty} = 0
+    rangeMigration.range      {mustBeNonempty} = 0
 end
 % grab input parameters
-radar          = rangeWalk.radar;
+radar          = rangeMigration.radar;
 freq_center_hz = radar.freq_center_hz;
 prf_hz         = radar.prf_hz;
 n_pulses       = radar.n_pulses;
 c_mps          = radar.c_mps;
 sample_rate_hz = radar.Fs_hz;
-range          = rangeWalk.range;
-range_rate     = rangeWalk.range_rate;
+range          = rangeMigration.range;
+range_rate     = rangeMigration.range_rate;
 
 % get target info
-trgt_range_rate = rangeWalk.target.range_rate_mps;
-trgt_range      = rangeWalk.target.range;
-trgt_rcs        = rangeWalk.target.rcs_dbsm;
+trgt_range_rate = rangeMigration.target.range_rate_mps;
+trgt_range      = rangeMigration.target.range;
+trgt_rcs        = rangeMigration.target.rcs_dbsm;
 
 relative_range_rate = range_rate - trgt_range_rate;
 relative_range      = range - trgt_range;
 
 % get our waveform
-waveform = rangeWalk.waveform;
+waveform = rangeMigration.waveform;
 
 % create samples per pulse vector and slow time vector
 n_samples_per_pulse = round(sample_rate_hz/prf_hz);
