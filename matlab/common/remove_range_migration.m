@@ -1,4 +1,4 @@
-function [signal] = remove_range_walk(removeRngWlk)
+function [dopp_correct] = remove_range_migration(removeRngWlk)
 %REMOVERANGEWALK This function removes the effects of range walk from a
 % radar data cube and returns the corrected datacube.
 % 

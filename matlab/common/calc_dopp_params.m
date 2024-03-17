@@ -23,6 +23,6 @@ end
 dopp_freq_ambig = dopp_freq - (k*prf_hz); % doppler value of target factoring 
                                           % in ambiguity index which determines which PRI our return is in
 
-range_rate_apparent = dopp_feq_ambig / range_rate_to_dop; % rage rate value of target as it appears to the radar at each PRF
+range_rate_apparent = dopp_feq_ambig / range_rate_to_dop; % range rate value of target as it appears to the radar at each PRF
 end
 

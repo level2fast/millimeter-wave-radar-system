@@ -1,4 +1,4 @@
-function [rng_walk_sig] = create_range_walk_data(rangeWalk)
+function [rng_walk_sig] = create_range_migrated_data(rangeWalk)
 %CREATE_RANGE_WALK_DATA Creates a radar signal that contains range walk. 
 % 
 %   Range walk is observed when there is coupling betwen the fast time

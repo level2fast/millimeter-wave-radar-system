@@ -8,7 +8,6 @@ arguments
 unambigV.Prf_hz (1,1) {mustBeNonnegative}  = 0 
 unambigV.lambda_m (1,1) {mustBeNonnegative}  = 0 
 end
-c = physconst('LightSpeed');
 unambiguous_velocity = (unambigV.Prf_hz*unambigV.lambda_m)/4;
 end
 

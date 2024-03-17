@@ -2,7 +2,7 @@ function [range_vector,doppler_vector,slow_time_vector] = create_vectors(radar)
 %CREATEvectorS Summary of this function goes here
 %   Detailed explanation goes here
 arguments
-    radar.Fs       (1,1) {mustBeNonnegative}  = 0  % sampling rate
+    radar.Fs       (1,1) {mustBeNonnegative}  = 0 % sampling rate
     radar.Prf      (1,1) {mustBeNonnegative}  = 0 % pulse repitition frequency
     radar.NumPulse (1,1) {mustBeNonnegative}  = 0 % number of pulses in a CPI
 end
