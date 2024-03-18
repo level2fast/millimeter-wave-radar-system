@@ -2,6 +2,7 @@
 % Millimeter Wave Radar Target Generation and Detection
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clear last_chirp
+clear
 clc;
 
 %% IWR68843AOP Medium Range Radar(MRR) Specifications 
