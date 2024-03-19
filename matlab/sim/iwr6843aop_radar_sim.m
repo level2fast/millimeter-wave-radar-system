@@ -130,7 +130,7 @@ Mix_fft = (Mix_fft - min(Mix_fft, [], 1)) ./ (max(Mix_fft, [], 1) - min(Mix_fft,
 Mix_fft = abs(Mix_fft);
 
 % Output of FFT is double sided signal, but we are interested in only one side of the spectrum.
-% Thereforee we throw out half of the samples.
+% Therefore we throw out half of the samples.
 Mix_fft = Mix_fft(1:Nr/2,:);
 
 % Plot the range to the target
