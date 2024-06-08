@@ -93,5 +93,7 @@ is recommended you use the mmWave demo to generate a profile suitable for your f
 <img src="/docs/images/rdm-no-static-clutter.png"/>
 
 # People Detection Mobile Device Visualizer Output
-<img src="/docs/images/rng-vel-plot-mobile-dev.gif"/>
-<img src="/docs/images/test.gif"/>
+Test Scenario              |  RadarVision Mobile App
+:-------------------------:|:-------------------------:
+![](/docs/images/test.gif)  |  ![](/docs/images/rng-vel-plot-mobile-dev.gif)
+
