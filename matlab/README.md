@@ -45,8 +45,16 @@ The root level of this folder contains MATLAB scripts used to process radar data
 3. Click Run<br/>
     <img src="../docs/images/run-sim.png"/>    
 
-
 ## Examples
+# Test Scenario
+This data was captured while a human target was running in front of the radar. Our results were compared against Texas Instruments MMWave Studio Plots.
+
+## Texas Instruments MMWave Studio Plot 
+
+* <img src="../docs/images/steven-running-exp.png"/>
+
+## People Detection Data Processor Plot
+
 * Radar Data Processor Parameters
     | Radar Parameters                   | Measurement  |
     |------------------------------------|--------------|
