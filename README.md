@@ -10,6 +10,7 @@ A moving target indicator radar signal data processing chain was implemented in 
 ### docs
 This folder contains the project specification document as diagrams.<br />
 docs<br />
+ 
  ┣ images<br />
  ┃ ┣ 2D CA_CFAR hyperparameters.png<br />
  ┃ ┣ 4-channel-rdm.png<br />
@@ -54,31 +55,12 @@ matlab<br />
  ┃ ┃ ┣ calc_fmcw_max_velocity_res.m<br />
  ┃ ┃ ┣ create_fmcw_vectors.m<br />
  ┃ ┃ ┗ get_aoa_vector.m<br />
- ┃ ┣ auto_correlation.m<br />
- ┃ ┣ calc_dopp_params.m<br />
  ┃ ┣ calc_min_snr_det.m<br />
  ┃ ┣ calc_min_tgt_det_rng.m<br />
- ┃ ┣ calc_n_pulse_per_cpi.m<br />
- ┃ ┣ calc_n_samp_per_pulse.m<br />
  ┃ ┣ calc_rel_vel_and_rng.m<br />
- ┃ ┣ calc_tgt_snr.m<br />
- ┃ ┣ calc_trgt_prob_det.m<br />
- ┃ ┣ calc_unamb_rng.m<br />
- ┃ ┣ calc_unamb_vel.m<br />
  ┃ ┣ cfar_2d_rdm.m<br />
- ┃ ┣ compress_signal.m<br />
  ┃ ┣ create_coherent_rdm.m<br />
- ┃ ┣ create_coherent_rdm2.m<br />
- ┃ ┣ create_complex_slow_time_vec.m<br />
- ┃ ┣ create_fast_time_freq.m<br />
- ┃ ┣ create_lfm_pulse_samples.m<br />
- ┃ ┣ create_lfm_pulse_time.m<br />
- ┃ ┣ create_range_migrated_data.m<br />
- ┃ ┣ create_signal_data.m<br />
- ┃ ┣ create_vectors.m<br />
- ┃ ┣ cross_correlation.m<br />
- ┃ ┣ match_filter_signal.m<br />
- ┃ ┗ remove_range_migration.m<br />
+ ┃ ┗ create_coherent_rdm2.m<br />
  ┣ sim<br />
  ┃ ┣ aoa_sim.m<br />
  ┃ ┣ beam_pattern_sim.m<br />
@@ -92,7 +74,7 @@ matlab<br />
  ┃ ┣ mti.m<br />
  ┃ ┣ prf_example.m<br />
  ┃ ┣ Radar.m<br />
- ┃ ┣ radar_simulation.slx
+ ┃ ┣ radar_simulation.slx<br />
  ┃ ┣ README.md<br />
  ┃ ┗ Target.m<br />
  ┣ util<br />
@@ -103,6 +85,7 @@ matlab<br />
  
 ### src
 This folder contains c source codes used for building and application that execute on the IWR6843AOP SoC.<br />
+
 src<br />
  ┣ .launches<br />
  ┃ ┗ out_of_box_6843_aop.launch<br />
@@ -139,6 +122,7 @@ src<br />
 
 ### util
 This folder contains small utility programs used to assit in testing the radar system. <br />
+
 arduino<br />
  ┣ ble_motor_conrol<br />
  ┃ ┗ ble_motor_conrol.ino<br />
@@ -147,6 +131,7 @@ arduino<br />
 
 ## visualizer
 This folder contains programs used to visualize the radar data.. <br />
+
 visualizer<br />
  ┣ radar-vision<br />
  ┣ firebase_write.py<br />
