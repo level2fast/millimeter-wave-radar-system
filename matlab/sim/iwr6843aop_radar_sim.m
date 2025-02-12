@@ -17,11 +17,11 @@ lightspeed = physconst('LightSpeed');
 %% Define Radar parameters
 radar = Radar();
 radar.Freq_Center_hz = 60e9;
-radar.Bandwidth_hz   = 135e6;
-radar.Pulse_Width_s  = 7e-6;
-radar.Lambda_m       = freq2wavelen(radar.Freq_Center_hz,lightspeed); % Wavelength (m)
+radar.Bandwidth_hz   = 300e6;
+radar.Pulse_Width_s  = 30e-6;
+radar.Lambda_m       = lightspeed/radar.Freq_Center_hz; % Wavelength (m)
 radar.Prf_hz         = 1/radar.Pulse_Width_s;
-radar.N_pulses       = 128;
+radar.N_pulses       = 256;
 radar.Fs_hz          = 17e6;
 
 % CA-CFAR parameters
@@ -36,7 +36,7 @@ pfa = 1e-4; % probability of false alarm
 % remains contant in this sim
 target = Target();
 target.Plat_Pos_m   = 10;
-target.Plat_Vel_m_s = 9.58; % Usain Bolts World record in Velocity falls within the range of our radar
+target.Plat_Vel_m_s = 0; % 9.58 Usain Bolts World record in Velocity falls within the range of our radar
 target_doppler_freq_hz = (2*target.Plat_Vel_m_s)/radar.Lambda_m;
 fprintf(1,'Target Name \n\tUsain Bolt \n');
 fprintf(1,'Target Range  \n\t%2.2f m \n',target.Plat_Pos_m);
@@ -49,10 +49,14 @@ fprintf(1,'Target Doppler Frequency \n\t%2.2f Hz\n\n',target_doppler_freq_hz);
 % Design the FMCW waveform by giving the specs of each of its parameters.
 % Calculate the Bandwidth (B), Chirp Time (Tchirp) and Slope (slope) of the FMCW
 % chirp using the requirements above.
+% Get operational parameters from radar to use in tx and rx processing
+Bandwidth = radar.Bandwidth_hz;
+Tchirp = radar.Pulse_Width_s;
+slope = Bandwidth / Tchirp;
 
 % Define/get radar parameters needed for sim
 fc              = radar.Freq_Center_hz;
-maxRange        = 22.5;
+maxRange        = 15e6 * lightspeed/(2*slope);
 
 % print important radar parameters 
 fprintf(1,'Radar Max Range         \n\t%0.2f meters \n',maxRange);
@@ -64,13 +68,8 @@ fprintf(1,'Radar Pulse Repitition frequency \n\t%2.2f KHz \n',radar.Prf_hz/1e3);
 fprintf(1,'Radar Pulses \n\t%2.2f  \n',radar.N_pulses);
 
 % Calculate range resolution
-range_resolution = bw2rangeres(radar.Bandwidth_hz);
+range_resolution = lightspeed/(2* radar.Bandwidth_hz);
 fprintf(1,'Radar Range Resolution \n\t%2.2f m\n',range_resolution);
-
-% Get operational parameters from radar to use in tx and rx processing
-Bandwidth = radar.Bandwidth_hz;
-Tchirp = radar.Pulse_Width_s;
-slope = Bandwidth / Tchirp;
 
 % Get the number of chirps in one sequence. Its ideal to have 2^ value for the 
 % ease of running the FFT  for Doppler Estimation. 
@@ -128,10 +127,10 @@ end
 % Reshape the vector into Nr*Nd array. Nr and Nd here would also define the size of
 % Range and Doppler FFT sizes respectively.
 Mix = reshape(Mix, [Nr, Nd]);
-
+fft_len = 2^(nextpow2(n_samples_per_chirp));
 % Run the FFT on the beat signal along the range bins dimension (Nr) and
 % normalize.
-Mix_fft = fft(Mix, [], 1);
+Mix_fft = fft(Mix, fft_len, 1);
 Mix_fft = (Mix_fft - min(Mix_fft, [], 1)) ./ (max(Mix_fft, [], 1) - min(Mix_fft, [], 1));
 
 % Take the absolute value of FFT output to get the magnitude of the signal
@@ -139,27 +138,43 @@ Mix_fft = abs(Mix_fft);
 
 % Output of FFT is double sided signal, but we are interested in only one side of the spectrum.
 % Therefore we throw out half of the samples.
-Mix_fft = Mix_fft(1:Nr/2,:);
+Mix_fft = Mix_fft(1:n_samples_per_chirp,:);
 
 % Plot the range to the target
 figure (1)
 subplot(2,1,1)
-
+% create range frequencies
+range_axis = (0:n_samples_per_chirp-1) * radar.Fs_hz/n_samples_per_chirp;
 % plot FFT output
 first_chirp = 1;
-plot(Mix_fft(:,first_chirp))
+plot(range_axis/1e6, Mix_fft(:,first_chirp))
+title('Range from First FFT (Chirp #1)')
+xlabel('Range (MHz)')
+ylabel('Amplitude')
+
+subplot(2,1,2)
+plot(range_axis/1e6, Mix_fft(:, radar.N_pulses))
+title('Range from Last FFT (Chirp #128)')
+xlabel('Range (MHz)')
+ylabel('Amplitude')
+
+figure (2)
+subplot(2,1,1)
+% create range frequencies
+range_axis = (0:n_samples_per_chirp-1) * radar.Fs_hz/n_samples_per_chirp;
+range_axis_m = range_axis * lightspeed/(2*slope);
+% plot FFT output
+first_chirp = 1;
+plot(range_axis_m, Mix_fft(:,first_chirp))
 title('Range from First FFT (Chirp #1)')
 xlabel('Range (m)')
 ylabel('Amplitude')
-axis ([0 (maxRange + 20) 0 1]);
 
 subplot(2,1,2)
-last_chirp = Mix_fft(:,radar.N_pulses);
-plot(last_chirp)
+plot(range_axis_m, Mix_fft(:, radar.N_pulses))
 title('Range from Last FFT (Chirp #128)')
 xlabel('Range (m)')
 ylabel('Amplitude')
-axis ([0 (maxRange + 20) 0 1]);
 
 %% Apply a window to the time domain signal to reduce spectral leakage
 % Choose a Window Function
@@ -172,7 +187,6 @@ Mix = win_dop .* Mix .* win_rng;
 %% RANGE DOPPLER RESPONSE
 % A 2DFFT will be run on the mixed signal (beat signal) output to generate
 % a range doppler map.
-
 % Range Doppler Map Generation.
 % The output of the 2D FFT is an image that has reponse in the range and
 % doppler FFT bins. So, it is important to convert the axis from bin sizes
@@ -191,7 +205,7 @@ RDM = 10*log10(RDM) ;
 % dimensions
 doppler_axis = linspace(-100,100,Nd);
 range_axis = linspace(-200,200,Nr/2)*((Nr/2)/400);
-figure(2)
+figure(3)
 ax1 = subplot(1, 2, 1);
 surfc((doppler_axis),range_axis,RDM);
 title( 'RDM From 2D FFT');
