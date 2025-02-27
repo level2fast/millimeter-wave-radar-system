@@ -16,16 +16,16 @@ clc;
 c_mps = physconst('LightSpeed');
 %% Define Radar parameters
 radar = Radar();
-radar.Freq_Center_hz = 60e9;
-radar.Bandwidth_hz   = 1500e6;  % bandwidth in Hz (300MHz)
+radar.Freq_Center_hz     = 60e9;
+radar.Bandwidth_hz       = 1500e6;  % bandwidth in Hz 
 radar.Chirp_Duration_us  = 50; % chirp duration in microseconds
-chirp_duration_s = radar.Chirp_Duration_us/1e6;
-radar.Lambda_m       = c_mps/radar.Freq_Center_hz; % Wavelength (m)
-radar.Prf_hz         = 1/chirp_duration_s;
-radar.N_Chirps       = 128;
-radar.Fs_hz          = 5e6;
-max_if_freq = 4.5e6;
-slope_hz_s = radar.Bandwidth_hz/chirp_duration_s;
+chirp_duration_s         = radar.Chirp_Duration_us/1e6;
+radar.Lambda_m           = c_mps/radar.Freq_Center_hz; % Wavelength (m)
+radar.Prf_hz             = 1/chirp_duration_s;
+radar.N_Chirps           = 512;
+radar.Fs_hz              = 5e6;
+max_if_freq              = 4.5e6;
+slope_hz_s               = radar.Bandwidth_hz/chirp_duration_s;
 
 % CA-CFAR parameters
 training_cells_range   = 4;
@@ -39,8 +39,8 @@ pfa = 1e-4; % probability of false alarm
 % remains contant in this sim
 target = Target();
 target.Plat_Pos_m   = 10;
-target.Plat_Vel_m_s = -5; % 9.58 Usain Bolts World record in Velocity falls within the range of our radar
-target_doppler_freq_hz = (2*target.Plat_Vel_m_s)/radar.Lambda_m;
+target.Plat_Vel_m_s = 9.58; % 9.58 Usain Bolts World record in Velocity falls within the range of our radar
+target_doppler_freq_hz = (-2*target.Plat_Vel_m_s)/radar.Lambda_m;
 fprintf(1,'Target Name \n\tUsain Bolt \n');
 fprintf(1,'Target Range  \n\t%2.2f m \n',target.Plat_Pos_m);
 fprintf(1,'Target Velocity  \n\t%2.2f m/s\n',target.Plat_Vel_m_s);
@@ -76,7 +76,7 @@ vmax = calc_fmcw_max_velocity("lambda",radar.Lambda_m,"total_chirp_time_s",chirp
 vres = calc_fmcw_max_velocity_res("lambda",radar.Lambda_m,"num_chirps_in_frame",radar.N_Chirps,"total_chirp_time",chirp_duration_s);
 fprintf(1,'Radar Max Doppler Freq  \n\t%2.2f Hz  \n',radar.Prf_hz/2);
 fprintf(1,'Radar Max Velocity  \n\t%2.2f meters/sec  \n',vmax);
-fprintf(1,'Radar Velocity Resolution  \n\t%2.2f meters/sec  \n',vres);
+fprintf(1,'Radar Velocity Resolution  \n\t%2.2f meters/sec  \n\n',vres);
 
 % Get the number of chirps in one sequence. Its ideal to have 2^ value for the 
 % ease of running the FFT  for Doppler Estimation. 
@@ -89,11 +89,6 @@ n_samples_per_chirp = round(radar.Fs_hz/radar.Prf_hz);
 
 % Get # of range cells
 Nr = n_samples_per_chirp;    
-
-% Calcuate timestamp for running the displacement scenario for every sample
-% on each chirp
-total_samples_cpi   = Nr * Nd;
-total_time_all_pris = Nd * chirp_duration_s;
 
 % Total time for samples, generate a linearly spaced vector between 0 and 
 % the sum of all PRI's. The number of points in the vector is equal to the 
@@ -111,7 +106,7 @@ time_delay_s      = zeros(1,length(time_s)); % represents total time delay as a 
 doppler_shift_Hz = 2*target.Plat_Vel_m_s / radar.Lambda_m;
 %% Signal generation and Moving Target simulation
 % Running the radar scenario over the time. 
-
+slow_time_axis =(0:Nd-1)/radar.Prf_hz;
 for chirp_idx=1:Nd
     % For each time step update the Range of the Target for constant velocity. 
     
@@ -125,12 +120,12 @@ for chirp_idx=1:Nd
 
     % Apply Doppler shift to the received signal for each chirp
     % The Doppler shift modifies the frequency of the received signal
-    doppler_phase_shift = exp(-1j * 2 * pi * chirp_idx*(doppler_shift_Hz/Nd));
+    doppler_phase_shift = exp(-1j * 2 * pi * slow_time_axis(chirp_idx)*(doppler_shift_Hz));
 
     Rx = exp(-1j* 2 * pi * ( fc_hz * (time_s - time_delay_s) + ( slope_hz_s * ( time_s - time_delay_s ).^2) / 2 ));
     
+    % Induce doppler frequency shift for this pulse
     Rx = Rx .* doppler_phase_shift;
-
 
     % Now we create the beat signal by mixing the transmit and receive. This
     % is done by an element wise matrix multiplication of transmit and receiver signal
@@ -140,12 +135,12 @@ end
 %% RANGE MEASUREMENT
 % Reshape the vector into Nr*Nd array. Nr and Nd here would also define the size of
 % Range and Doppler FFT sizes respectively.
-Mix = reshape(Mix, [Nr, Nd]);
+Mix_rng_meas = reshape(Mix, [Nr, Nd]);
 fft_len = 2^(nextpow2(n_samples_per_chirp));
 
 % Run the FFT on the beat signal along the range bins dimension (Nr) and
 % normalize.
-Mix_fft = fft(Mix, fft_len, 1);
+Mix_fft = fft(Mix_rng_meas, fft_len, 1);
 Mix_fft = (Mix_fft - min(Mix_fft, [], 1)) ./ (max(Mix_fft, [], 1) - min(Mix_fft, [], 1));
 
 % Take the absolute value of FFT output to get the magnitude of the signal
@@ -206,7 +201,7 @@ Mix = Mix .* win_dop;
 % doppler FFT bins. So, it is important to convert the axis from bin sizes
 % to range and doppler based on their Max values.
 
-%% Perform range and doppler processing
+% Perform range and doppler processing
 fft_size_rng = 2^nextpow2(size(Mix_fft,1));
 range_fft = fft(Mix,fft_size_rng,1);
 doppler_fft = fftshift(fft(range_fft, size(Mix,2),2),2);
@@ -215,12 +210,14 @@ RDM = abs(sig_rng_dopp_freq);
 RDM = 20*log10(RDM);
 
 %% Plot RDM
-dopp_asix_hz = -radar.Prf_hz/2:vres:radar.Prf_hz/2;
+% Compute Doppler Bin Frequencies
+delta_fd = radar.Prf_hz / Nd;  % Doppler bin resolution
+dopp_axis_hz = (-Nd/2 : Nd/2 - 1) * delta_fd;  % Doppler frequency axis
 freq_axis_hz = (0:n_samples_per_chirp-1) * radar.Fs_hz/n_samples_per_chirp; % frequency spectrum data
 freq_to_range_factor = c_mps/(2*slope_hz_s);
 range_axis_m = freq_to_range_factor *freq_axis_hz;
 figure(3)
-imagesc(dopp_asix_hz/1e3,range_axis_m,RDM)
+imagesc(dopp_axis_hz/1e3,range_axis_m,RDM)
 xlabel("Dopper(KHz)")
 ylabel("Rang(m)")
 axis xy
@@ -232,44 +229,37 @@ colorbar
 [row, col] = ind2sub(size(RDM),linear_index);
 
 % Display results 
+fprintf("RDM Results\n")
+fprintf("------------------ \n")
 disp(['Peak Value:', num2str(max_value)])
 disp(['Range Bin:', num2str(row)])
+disp(['Range(m):', num2str(range_axis_m(row))])
 disp(['Doppler Bin:', num2str(col)])
-
-delta_fd = radar.Prf_hz/radar.N_Chirps;
-doppler_bin = round(doppler_shift_Hz / delta_fd);
-fprintf('Expected Doppler bin: %d\n', doppler_bin);
+disp(['Doppler Freq(Hz):', num2str(dopp_axis_hz(col))])
+disp(['Velocity mps:', num2str(radar.Lambda_m* dopp_axis_hz(col)/2)])
 
 % Use the surf function to plot the output of 2DFFT and to show axis in both
 % dimensions
-% lambda_m = radar.Lambda_m;
-% 
-% % Doppler Frequency Axis
-% fd_max = (2 * vmax)/ lambda_m; % Maximum Doppler frequency (Hz)
-% delta_f = radar.Prf_hz/radar.N_Chirps;
-% doppler_freq_axis = -radar.Prf_hz/2:delta_f:((radar.Prf_hz/2)-delta_f);
-% % Convert Doppler frequency to velocity
-% unambig_max_vel = (radar.Lambda_m / 4) * radar.Prf_hz;
-% velocity_axis = linspace(-unambig_max_vel, unambig_max_vel,radar.N_Chirps);
-% doppler_axis = linspace(-100,100,Nd);
-% figure(3)
-% ax1 = subplot(1, 2, 1);
-% rng_axis_m = range_axis_m(1:Nr/2);
-% surf(velocity_axis, rng_axis_m, RDM);
-% title( 'RDM From 2D FFT');
-% xlabel('Velocity(m/s)');
-% ylabel('Range(m)');
-% zlabel('Amplitude (dBFs)');
-% axis xy
-% colorbar;
-return
+% Convert Doppler frequency to velocity
+unambig_max_vel = (radar.Lambda_m / 4) * radar.Prf_hz;
+velocity_axis = linspace(-unambig_max_vel, unambig_max_vel,radar.N_Chirps);
+figure(4)
+rng_axis_m = range_axis_m;
+surf(velocity_axis, range_axis_m, RDM(1:250,:));
+title( 'RDM From 2D FFT');
+xlabel('Velocity(m/s)');
+ylabel('Range(m)');
+zlabel('Amplitude (dBFs)');
+axis xy
+colorbar;
+
 %% Apply CFAR-CA to get detections
 % calculate ragne axis
 delta_R = c_mps / (2 * radar.Bandwidth_hz);
 max_range = (n_samples_per_chirp - 1) * delta_R;
 range_axis = linspace(-max_range, max_range, n_samples_per_chirp);
 
-cfar_signal = cfar_2d_rdm_sim(Rdm=RDM, ...
+cfar_signal = cfar_2d_rdm_sim(Rdm=RDM(1:250,:), ...
     Pfa=pfa, ...
     NumRangeCells=Nr, ...
     NumDoppCells=Nd, ...
@@ -281,7 +271,7 @@ cfar_signal = cfar_2d_rdm_sim(Rdm=RDM, ...
     Gr=gaurd_cells_doppler,...   
     PlotData="false");
 
-ax2 = subplot(1, 2, 2);
+figure(5)
 surf(rng_axis_m, velocity_axis, cfar_signal.', 'LineStyle', 'none');
 alpha 0.75;
 grid minor;
