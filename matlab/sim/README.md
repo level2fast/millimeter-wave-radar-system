@@ -16,13 +16,16 @@ This folder contains scripts that allow a user to configure an FMCW waveform bas
 	lightspeed = physconst('LightSpeed');
 	%% Define Radar parameters
 	radar = Radar();
-	radar.Freq_Center_hz = 60e9;
-	radar.Bandwidth_hz   = 135e6;
-	radar.Pulse_Width_s  = 7e-6;
-	radar.Lambda_m       = freq2wavelen(radar.Freq_Center_hz,lightspeed); % Wavelength (m)
-	radar.Prf_hz         = 1/radar.Pulse_Width_s;
-	radar.N_pulses       = 128;
-	radar.Fs_hz          = 17e6;
+	radar.Freq_Center_hz     = 60e9;
+	radar.Bandwidth_hz       = 1500e6;  % bandwidth in Hz 
+	radar.Chirp_Duration_us  = 50; % chirp duration in microseconds
+	chirp_duration_s         = radar.Chirp_Duration_us/1e6;
+	radar.Lambda_m           = c_mps/radar.Freq_Center_hz; % Wavelength (m)
+	radar.Prf_hz             = 1/chirp_duration_s;
+	radar.N_Chirps           = 512;
+	radar.Fs_hz              = 5e6;
+	max_if_freq              = 4.5e6;
+	slope_hz_s               = radar.Bandwidth_hz/chirp_duration_s;
 
 	% CA-CFAR parameters
 	training_cells_range   = 4;
@@ -37,12 +40,7 @@ This folder contains scripts that allow a user to configure an FMCW waveform bas
 	target = Target();
 	target.Plat_Pos_m   = 10;
 	target.Plat_Vel_m_s = 9.58; % Usain Bolts World record in Velocity falls within the range of our radar
-	target_doppler_freq_hz = (2*target.Plat_Vel_m_s)/radar.Lambda_m;
-	fprintf(1,'Target Name \n\tUsain Bolt \n');
-	fprintf(1,'Target Range  \n\t%2.2f m \n',target.Plat_Pos_m);
-	fprintf(1,'Target Velocity  \n\t%2.2f m\n',target.Plat_Vel_m_s);
-	fprintf(1,'Target Doppler Frequency \n\t%2.2f Hz\n\n',target_doppler_freq_hz);
-
+	target_doppler_freq_hz = (-2*target.Plat_Vel_m_s)/radar.Lambda_m;
     ```
 2. Open the [iwr6843aop_radar_sim](iwr6843aop_radar_sim.m)
 3. Click Run<br/>
@@ -72,34 +70,82 @@ Applying the Fast Fourier Transform on the sampled beat signal to convert the si
 ### 1. Radar Specifications 
 * Frequency of operation = 60GHz
 * Max Range = 22.5 m
-* Range Resolution = 1 m
-* Max Velocity = 10 m/s
+* Range Resolution = 0.1 m
+* Max Velocity = 9.8 m/s
 * Light Speed = 3e8 m/s
 
 ### 2. FMCW Waveform Generation
 The FMCW waveform design:
 * Carrier Frequency = 60 GHz
-* Sampling Rate = 17 MHz
+* Sampling Rate = 5 MHz
 * The Bandwidth (B) = `speed_of_light / (2 * Range_Resolution_of_Radar) = 135 MHz`
-* Chirp Time (Tchirp) =  `(sweep_time_factor(should be at least 5 to 6) * 2 * Max_Range_of_Radar) / speed_of_light = 7 μs`
+* Chirp Time (Tchirp) =  `(sweep_time_factor(should be at least 5 to 6) * 2 * Max_Range_of_Radar) / speed_of_light = 50 μs`
 * Slope of the FMCW chirp(Mhz/us) = `B / Tchirp = 30(MHz/us)`
-* The number of chirps in one sequence (Nd) = 128
-* The number of samples on each chirp (Nr)  = 119 
+* The number of chirps in one sequence (Nd) = 512
+* The number of samples on each chirp (Nr)  = 128 
 
 ### 3. User Defined Range and Velocity of the simulated target
 
 * Target Initial Range = 10 m
-* Target Velocity = 10 m/s
+* Target Velocity = 9.58 m/s
 * Simulation Result
 
-<img src="../../docs/images/fmcw-range-sim-measurment.png"/>
+<img src="../../docs/images/beat-freq-hz-tgt-usain-bolt.png"/>
 
+<img src="../../docs/images/range-meters-tgt-usain-bolt.png"/>
 
 ### 6. Range Doppler Response
 Applying the 2D FFT on the beat signal where the output of the first FFT gives the beat frequency, amplitude, and phase for each target. This phase varies as we move from one chirp to another due to the target’s small displacements. Once the second FFT is implemented it determines the rate of change of phase, which is nothing but the doppler frequency shift (Velocity of the targets). The output of Range Doppler response represents an image with Range on one axis and Doppler on the other. This image is called as Range Doppler Map (RDM).
 
 * Simulation Result
-<img src="../../docs/images/rdm-sim.png"/>
+	```text
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% Millimeter Wave Radar Target Generation and Detection
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	Target Name 
+		Usain Bolt 
+	Target Range  
+		10.00 m 
+	Target Velocity  
+		9.58 m/s
+	Target Doppler Frequency 
+		-3834.65 Hz
+
+	Radar Max Range         
+		22.48 meters 
+	Radar Center Frequency  
+		60.00 GHz 
+	Radar Sampling Rate  
+		5.00 MHz 
+	Radar Chirp Duration 
+		50.0 us 
+	Radar Bandwidth      
+		1500.00 MHz
+	Radar Pulse Repitition frequency 
+		20.00 KHz 
+	Radar Pulses 
+		512.00  
+	Radar Max Beat Freq  
+		15.00 Mhz  
+	Radar Range Resolution 
+		0.10 m
+	Radar Max Doppler Freq  
+		10000.00 Hz  
+	Radar Max Velocity  
+		24.98 meters/sec  
+	Radar Velocity Resolution  
+		0.10 meters/sec  
+
+	RDM Results
+	------------------ 
+	Peak Value:88.6921
+	Range Bin:104
+	Range(m):10.2929
+	Doppler Bin:159
+	Doppler Freq(Hz):-3828.125
+	Velocity mps:-9.5637
+	```
+	<img src="../../docs/images/imagesc-tgt-usain-bolt.png"/>
 
 ### 7. CA-CFAR implementation
 Applying the 2d CA-CFAR on the RDM outputed from 2D FFT to filter out the noise. As, CFAR varies the detection threshold based on the vehicle surroundings.
@@ -129,5 +175,5 @@ Applying the 2d CA-CFAR on the RDM outputed from 2D FFT to filter out the noise.
 <br>
 
 * Simulation Result
-<img src="../../docs/images/cfar-rdm-sim.png"/>
-<img src="../../docs/images/cfar-rdm-sim-3d.png"/>
+<img src="../../docs/images/surf-plt-rdm-tgt-usain-bolt.png"/>
+<img src="../../docs/images/cfar-rdm-tgt-usain-bolt.png"/>

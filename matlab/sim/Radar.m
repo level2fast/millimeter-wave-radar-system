@@ -20,13 +20,13 @@ classdef Radar
         Bandwidth_hz   (1,1) {mustBeNumeric} = 0 % bandwidth
         Fs_hz          (1,1) {mustBeNumeric} = 0 % sampling rate
         Prf_hz         (1,1) {mustBeNumeric} = 0 % pulse repitition frequency
-        Pulse_Width_s  (1,1) {mustBeNumeric} = 0 % transmitted pulse width/duration
+        Chirp_Duration_us  (1,1) {mustBeNumeric} = 0 % transmitted pulse width/duration
         Freq_Center_hz (1,1) {mustBeNumeric} = 0 % radar carrier frequency
 
         % Dwell properties
         Tcpi_s         {mustBeReal} = 0 % radar CPI time depends on the time 
                                         % that an antenna beam spends on target
-        N_pulses       {mustBeReal} = 0 % number of pulses per dwell 
+        N_Chirps       {mustBeReal} = 0 % number of chirps per frame 
                                     
         % Parameter selection
         Duty_Factor        {mustBeReal} = 0 % ratio of pulse width to the period
