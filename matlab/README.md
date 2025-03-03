@@ -2,6 +2,9 @@
 # MATLAB
 The root level of this folder contains MATLAB scripts used to process radar data captured by the **[IWR6843A0P](https://www.ti.com/tool/IWR6843AOPEVM#description)**. The [process_iwr6843aop_data](process_iwr6843aop_data.m) file can be used to perform analysis of the moving target indicator radar data processing chain. The [process_iwr6843aop_data](process_iwr6843aop_data.m) prints out the selected radar parameters used for processing the specified data file, generates plots for analyzing the range doppler response, target detection using CA-CFAR algorithm, and angle of arrival estimation.
 
+# millimeter-wave-radar-system
+ The radar signal processing analysis was performed using MATLAB. A simulation of an FMCW radar system was developed to confirm that the selected radar parameters were appropriate for the desired application of the radar system. That simulation was then used to produce a model capable of processing radar data captured by the **[IWR6843A0P](https://www.ti.com/tool/IWR6843AOPEVM#description)**. 
+
 ## How to run the MTI data processor
 1. Define the radar parameters
     ```matlab
