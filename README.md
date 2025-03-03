@@ -19,7 +19,7 @@ A visualizer that executes on an android device was developed to see the results
 ---
 
 ## **🚀 Live Demo**  
-[🔗 Click here to check out the live version](https://github.com/level2fast/millimeter-wave-radar-system/blob/main/visualizer/README.md#people-detection-mobile-device-visualizer-output) *(if applicable)*  
+[🔗 Click here to check out the live version](https://github.com/level2fast/millimeter-wave-radar-system/blob/main/visualizer/README.md#people-detection-mobile-device-visualizer-output)
 
 
 [🔗 Click here to view the final presentation](https://drive.google.com/file/d/1-2rGQtX42mz8FN6Se58B0nz1l1jNucHP/view?usp=sharing)
