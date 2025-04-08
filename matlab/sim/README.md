@@ -148,7 +148,7 @@ Applying the 2D FFT on the beat signal where the output of the first FFT gives t
 	<img src="../../docs/images/imagesc-tgt-usain-bolt.png"/>
 
 ### 7. CA-CFAR implementation
-Applying the 2d CA-CFAR on the RDM outputed from 2D FFT to filter out the noise. As, CFAR varies the detection threshold based on the vehicle surroundings.
+Applying the 2d CA-CFAR on the RDM outputed from 2D FFT to filter out the noise. As, CFAR varies the detection threshold based on the targets surroundings.
 
 #### CA-CFAR algorithm:
 1. Determine the number of Training cells for each dimension. Similarly, pick the number of guard cells.
