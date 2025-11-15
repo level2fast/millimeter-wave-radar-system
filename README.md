@@ -11,7 +11,7 @@ This project consists of a a simulation of an FMCW Millimeter wave radar system 
 
 A moving target indicator radar signal data processing chain was implemented in MATLAB to peform analysis of the data. Finally a C application provided by Texas Instruments was compiled and deployed to the **[IWR6843A0P](https://www.ti.com/tool/IWR6843AOPEVM#description)** MCU and DSP to process the data in real time producing the necessary outputs that are provided as input to the radar visualizer. The overall objective of this project was the production of a range doppler map which shows how far a moving target is from the radar in meters and the velocity at which it is moving in meters per second. As a bonus angle of arrival was also estimated with limited accuracy due to a small number of antenna elements and the selected method of beamforming.
 
-A visualizer that executes on an android device was developed to see the results in near real time. The visualizer was developed using the Flutte framework.
+A visualizer that executes on an android device was developed to see the results in near real time. The visualizer was developed using the Flutter framework.
 
 # MTI Data Processing Chain
 <img src="docs/images/MTI-Data-Proc-Chain-HW-SP.png"/>
