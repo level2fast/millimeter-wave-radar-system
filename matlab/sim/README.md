@@ -90,8 +90,6 @@ The FMCW waveform design:
 * Target Velocity = 9.58 m/s
 * Simulation Result
 
-<img src="../../docs/images/beat-freq-hz-tgt-usain-bolt.png"/>
-
 <img src="../../docs/images/range-meters-tgt-usain-bolt.png"/>
 
 ### 6. Range Doppler Response
@@ -177,3 +175,4 @@ Applying the 2d CA-CFAR on the RDM outputed from 2D FFT to filter out the noise.
 * Simulation Result
 <img src="../../docs/images/surf-plt-rdm-tgt-usain-bolt.png"/>
 <img src="../../docs/images/cfar-rdm-tgt-usain-bolt.png"/>
+
